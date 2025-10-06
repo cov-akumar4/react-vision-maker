@@ -19,7 +19,7 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
     if (isAdmin) {
       return [
         {
-          title: "Main",
+          title: t('main'),
           items: [
             { icon: Home, label: t('dashboard'), view: "dashboard" },
             { icon: Users, label: t('clients'), view: "clients" },
@@ -31,7 +31,7 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
     if (isClient) {
       return [
         {
-          title: "Main",
+          title: t('main'),
           items: [
             { icon: Home, label: t('dashboard'), view: "dashboard" },
             { icon: Upload, label: t('inspections'), view: "inspections" },

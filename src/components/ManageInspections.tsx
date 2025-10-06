@@ -139,7 +139,7 @@ export function ManageInspections() {
           <div className="text-center py-8">{t('loading')}</div>
         ) : inspections.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No inspections yet
+            {t('noInspections')}
           </div>
         ) : (
           <Table>
@@ -149,7 +149,7 @@ export function ManageInspections() {
                 <TableHead>{t('location')}</TableHead>
                 <TableHead>{t('inspectionType')}</TableHead>
                 <TableHead>{t('status')}</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t('date')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
