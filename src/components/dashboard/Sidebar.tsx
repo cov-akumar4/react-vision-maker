@@ -1,18 +1,18 @@
 import { BarChart3, Home, FileText, Map, Settings, Users, X, Upload, UserCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onNavigate: (view: string) => void;
+  onOpenProfile: () => void;
+  currentView: string;
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentView }: SidebarProps) {
   const { profile, signOut, isAdmin, isClient } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
 
   const getMenuSections = () => {
@@ -21,37 +21,25 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {
           title: "Main",
           items: [
-            { icon: Home, label: t('dashboard'), path: "/" },
-            { icon: Users, label: t('clients'), path: "/admin/clients" },
-          ],
-        },
-        {
-          title: "Account",
-          items: [
-            { icon: UserCircle, label: t('profile'), path: "/profile" },
+            { icon: Home, label: t('dashboard'), view: "dashboard" },
+            { icon: Users, label: t('clients'), view: "clients" },
           ],
         },
       ];
     }
-    
+
     if (isClient) {
       return [
         {
           title: "Main",
           items: [
-            { icon: Home, label: t('dashboard'), path: "/" },
-            { icon: Upload, label: t('inspections'), path: "/client/inspections" },
-          ],
-        },
-        {
-          title: "Account",
-          items: [
-            { icon: UserCircle, label: t('profile'), path: "/profile" },
+            { icon: Home, label: t('dashboard'), view: "dashboard" },
+            { icon: Upload, label: t('inspections'), view: "inspections" },
           ],
         },
       ];
     }
-    
+
     return [];
   };
 
@@ -106,19 +94,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div className="space-y-1">
                 {section.items.map((item, itemIdx) => {
                   const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
+                  const isActive = currentView === item.view;
                   return (
                     <Button
                       key={itemIdx}
                       variant={isActive ? "default" : "ghost"}
                       onClick={() => {
-                        navigate(item.path);
+                        onNavigate(item.view);
                         onClose();
                       }}
                       className={`
-                        w-full justify-start gap-3 
-                        ${isActive 
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90" 
+                        w-full justify-start gap-3
+                        ${isActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         }
                       `}
@@ -136,7 +124,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* User Info & Logout */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border bg-sidebar">
           <div className="space-y-3">
-            <div className="space-y-1">
+            <button
+              onClick={() => {
+                onOpenProfile();
+                onClose();
+              }}
+              className="w-full text-left space-y-1 hover:bg-sidebar-accent rounded-lg p-2 transition-colors"
+            >
               <p className="text-sm font-medium text-sidebar-foreground">
                 {profile?.full_name || profile?.email}
               </p>
@@ -144,7 +138,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-xs text-sidebar-accent-foreground bg-sidebar-accent px-2 py-1 rounded w-fit">
                 {t(profile?.role || 'client')}
               </p>
-            </div>
+            </button>
             <Button
               variant="ghost"
               size="sm"
