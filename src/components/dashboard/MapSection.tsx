@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - react-leaflet v4.2.1 types compatibility
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Layers, Maximize2, MoreVertical } from "lucide-react";
