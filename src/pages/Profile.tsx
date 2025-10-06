@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -17,23 +16,13 @@ export default function Profile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
-    
+
     setIsLoading(true);
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: fullName })
-        .eq('id', profile.id);
-
-      if (error) throw error;
-      
+    setTimeout(() => {
       toast.success(t('profileUpdated'));
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (

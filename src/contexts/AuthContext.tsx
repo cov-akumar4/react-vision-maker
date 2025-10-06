@@ -1,19 +1,17 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { mockUsers, credentials } from '@/data/mockData';
 
-interface Profile {
+interface User {
   id: string;
   email: string;
-  full_name: string | null;
+  full_name: string;
   role: 'admin' | 'client';
 }
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
-  profile: Profile | null;
+  profile: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -25,91 +23,49 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Fetch profile when session changes
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    const storedUser = localStorage.getItem('mockUser');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (!error) {
-      navigate('/');
+    const validCredentials = Object.values(credentials).find(
+      cred => cred.email === email && cred.password === password
+    );
+
+    if (validCredentials) {
+      const foundUser = mockUsers.find(u => u.email === email);
+      if (foundUser) {
+        setUser(foundUser);
+        localStorage.setItem('mockUser', JSON.stringify(foundUser));
+        navigate('/');
+        return { error: null };
+      }
     }
-    
-    return { error };
+
+    return { error: { message: 'Invalid credentials' } };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
     setUser(null);
-    setSession(null);
-    setProfile(null);
+    localStorage.removeItem('mockUser');
     navigate('/login');
   };
 
-  const isAdmin = profile?.role === 'admin';
-  const isClient = profile?.role === 'client';
+  const isAdmin = user?.role === 'admin';
+  const isClient = user?.role === 'client';
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
-        profile,
+        profile: user,
         loading,
         signIn,
         signOut,

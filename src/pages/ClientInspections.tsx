@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { Upload } from 'lucide-react';
+import { mockInspections } from '@/data/mockData';
 
 interface Inspection {
   id: string;
@@ -40,48 +40,19 @@ export default function ClientInspections() {
 
   useEffect(() => {
     if (user) {
-      fetchInspections();
-    }
-  }, [user]);
-
-  const fetchInspections = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('inspections')
-        .select('*')
-        .eq('client_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setInspections(data || []);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
+      const userInspections = mockInspections.filter(i => i.client_id === user.id);
+      setInspections(userInspections);
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     setIsUploading(true);
 
-    try {
-      const { error } = await supabase
-        .from('inspections')
-        .insert({
-          client_id: user.id,
-          title: newInspection.title,
-          description: newInspection.description,
-          location: newInspection.location,
-          inspection_type: newInspection.inspectionType,
-          inspection_date: newInspection.inspectionDate || null,
-          status: 'pending',
-        });
-
-      if (error) throw error;
-      
+    setTimeout(() => {
       toast.success(t('uploadSuccess'));
       setIsDialogOpen(false);
       setNewInspection({
@@ -91,12 +62,8 @@ export default function ClientInspections() {
         inspectionType: '',
         inspectionDate: '',
       });
-      fetchInspections();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
       setIsUploading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -198,7 +165,7 @@ export default function ClientInspections() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {inspection.inspection_date 
+                      {inspection.inspection_date
                         ? new Date(inspection.inspection_date).toLocaleDateString()
                         : '-'}
                     </TableCell>

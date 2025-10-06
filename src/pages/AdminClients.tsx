@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
+import { mockUsers } from '@/data/mockData';
 
 interface Client {
   id: string;
   email: string;
-  full_name: string | null;
+  full_name: string;
   created_at: string;
 }
 
@@ -30,42 +30,26 @@ export default function AdminClients() {
   });
 
   useEffect(() => {
-    fetchClients();
+    const clientUsers = mockUsers
+      .filter(u => u.role === 'client')
+      .map(u => ({
+        ...u,
+        created_at: new Date().toISOString()
+      }));
+    setClients(clientUsers);
+    setIsLoading(false);
   }, []);
-
-  const fetchClients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'client')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setClients(data || []);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
 
-    try {
-      // Create user via admin API would require a backend function
-      // For now, we'll show a message that this needs backend setup
-      toast.info('This feature requires email integration. Please check the backend setup.');
-      
+    setTimeout(() => {
+      toast.success('Client created successfully (mock data)');
       setIsDialogOpen(false);
       setNewClient({ email: '', fullName: '', password: '' });
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
       setIsCreating(false);
-    }
+    }, 500);
   };
 
   return (
