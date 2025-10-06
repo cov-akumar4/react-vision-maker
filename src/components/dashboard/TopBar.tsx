@@ -1,13 +1,15 @@
-import { Menu, Search, Bell, Mail, Shield } from "lucide-react";
+import { Menu, Search, Bell, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 interface TopBarProps {
   onToggleSidebar: () => void;
-  onOpenAccessModal: () => void;
 }
 
-export function TopBar({ onToggleSidebar, onOpenAccessModal }: TopBarProps) {
+export function TopBar({ onToggleSidebar }: TopBarProps) {
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-30 bg-card border-b border-border px-4 py-3">
       <div className="flex items-center gap-4">
@@ -25,7 +27,7 @@ export function TopBar({ onToggleSidebar, onOpenAccessModal }: TopBarProps) {
         <div className="relative flex-1 max-w-xl hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search inspections, reports, or locations..."
+            placeholder={t('search')}
             className="pl-10"
           />
         </div>
@@ -39,9 +41,7 @@ export function TopBar({ onToggleSidebar, onOpenAccessModal }: TopBarProps) {
           <Button variant="ghost" size="icon">
             <Mail className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onOpenAccessModal}>
-            <Shield className="w-5 h-5" />
-          </Button>
+          <LanguageSwitcher />
         </div>
       </div>
     </header>
