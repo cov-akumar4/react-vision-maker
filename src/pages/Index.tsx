@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -13,6 +14,7 @@ import { ManageInspections } from "@/components/ManageInspections";
 import { ProfileModal } from "@/components/ProfileModal";
 
 const Index = () => {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState("dashboard");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -46,7 +48,7 @@ const Index = () => {
           return (
             <div className="mt-8 text-center">
               <p className="text-lg text-muted-foreground">
-                Welcome! Use the sidebar to navigate to your inspections.
+                {t('welcomeMessage')}
               </p>
             </div>
           );
@@ -74,8 +76,8 @@ const Index = () => {
           {renderContent()}
 
           <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <div>&copy; 2025 PowerScan Analytics. All rights reserved.</div>
-            <div>Version 3.2.1</div>
+            <div>{t('copyright')}</div>
+            <div>{t('version')}</div>
           </footer>
         </div>
       </main>

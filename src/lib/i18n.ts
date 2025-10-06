@@ -60,6 +60,28 @@ const resources = {
       admin: 'Admin',
       client: 'Client',
       role: 'Role',
+      
+      // Theme
+      toggleTheme: 'Toggle theme',
+      lightMode: 'Light',
+      darkMode: 'Dark',
+      systemMode: 'System',
+      
+      // Dashboard
+      dashboardTitle: 'Power Line Analytics Dashboard',
+      dashboardSubtitle: 'Monitor and analyze power line inspection data in real-time',
+      welcomeMessage: 'Welcome! Use the sidebar to navigate to your inspections.',
+      
+      // Footer
+      copyright: '© 2025 PowerScan Analytics. All rights reserved.',
+      version: 'Version 3.2.1',
+      
+      // Common UI
+      main: 'Main',
+      createdAt: 'Created At',
+      date: 'Date',
+      noInspections: 'No inspections yet',
+      clientCreatedMock: 'Client created successfully (mock data)',
     },
   },
   es: {
@@ -119,6 +141,28 @@ const resources = {
       admin: 'Administrador',
       client: 'Cliente',
       role: 'Rol',
+      
+      // Theme
+      toggleTheme: 'Cambiar tema',
+      lightMode: 'Claro',
+      darkMode: 'Oscuro',
+      systemMode: 'Sistema',
+      
+      // Dashboard
+      dashboardTitle: 'Panel de Análisis de Líneas Eléctricas',
+      dashboardSubtitle: 'Monitorea y analiza datos de inspección de líneas eléctricas en tiempo real',
+      welcomeMessage: '¡Bienvenido! Usa la barra lateral para navegar a tus inspecciones.',
+      
+      // Footer
+      copyright: '© 2025 PowerScan Analytics. Todos los derechos reservados.',
+      version: 'Versión 3.2.1',
+      
+      // Common UI
+      main: 'Principal',
+      createdAt: 'Creado el',
+      date: 'Fecha',
+      noInspections: 'Aún no hay inspecciones',
+      clientCreatedMock: 'Cliente creado exitosamente (datos de prueba)',
     },
   },
   pt: {
@@ -178,6 +222,28 @@ const resources = {
       admin: 'Administrador',
       client: 'Cliente',
       role: 'Função',
+      
+      // Theme
+      toggleTheme: 'Alternar tema',
+      lightMode: 'Claro',
+      darkMode: 'Escuro',
+      systemMode: 'Sistema',
+      
+      // Dashboard
+      dashboardTitle: 'Painel de Análise de Linhas Elétricas',
+      dashboardSubtitle: 'Monitore e analise dados de inspeção de linhas elétricas em tempo real',
+      welcomeMessage: 'Bem-vindo! Use a barra lateral para navegar até suas inspeções.',
+      
+      // Footer
+      copyright: '© 2025 PowerScan Analytics. Todos os direitos reservados.',
+      version: 'Versão 3.2.1',
+      
+      // Common UI
+      main: 'Principal',
+      createdAt: 'Criado em',
+      date: 'Data',
+      noInspections: 'Ainda não há inspeções',
+      clientCreatedMock: 'Cliente criado com sucesso (dados de teste)',
     },
   },
 };

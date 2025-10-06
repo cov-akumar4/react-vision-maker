@@ -2,6 +2,7 @@ import { Menu, Search, Bell, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useTranslation } from "react-i18next";
 
 interface TopBarProps {
@@ -41,6 +42,7 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
           <Button variant="ghost" size="icon">
             <Mail className="w-5 h-5" />
           </Button>
+          <ThemeSwitcher />
           <LanguageSwitcher />
         </div>
       </div>
