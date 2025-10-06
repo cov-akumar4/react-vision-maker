@@ -1,4 +1,4 @@
-import { BarChart3, Home, FileText, Map, Settings, Users, X, Upload, UserCircle, LogOut } from "lucide-react";
+import { ChartBar as BarChart3, Chrome as Home, FileText, Map, Settings, Users, X, Upload, CircleUser as UserCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
