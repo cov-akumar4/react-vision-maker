@@ -45,7 +45,7 @@ export function ManageClients() {
     setIsCreating(true);
 
     setTimeout(() => {
-      toast.success('Client created successfully (mock data)');
+      toast.success(t('clientCreatedMock'));
       setIsDialogOpen(false);
       setNewClient({ email: '', fullName: '', password: '' });
       setIsCreating(false);
@@ -114,7 +114,7 @@ export function ManageClients() {
               <TableRow>
                 <TableHead>{t('clientName')}</TableHead>
                 <TableHead>{t('email')}</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead>{t('createdAt')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
