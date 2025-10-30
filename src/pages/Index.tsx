@@ -22,20 +22,37 @@ const Index = () => {
 
   const renderContent = () => {
     if (isAdmin) {
-      switch (currentView) {
-        case "clients":
-          return <ManageClients />;
-        case "dashboard":
-        default:
-          return (
-            <>
-              <FilterSection />
-              <StatsCards />
-              <ChartsSection />
-              <DataTable />
-              <MapSection />
-            </>
-          );
+      if (currentView === "clients") {
+        return <ManageClients />;
+      }
+      if (currentView.startsWith("inspections/")) {
+        const subView = currentView.split('/')[1];
+        return (
+          <div className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4">{t(subView)}</h2>
+            <p className="text-muted-foreground">{t('comingSoon')}</p>
+          </div>
+        );
+      }
+      if (currentView.startsWith("system/")) {
+        const subView = currentView.split('/')[1];
+        return (
+          <div className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4">{t(subView)}</h2>
+            <p className="text-muted-foreground">{t('comingSoon')}</p>
+          </div>
+        );
+      }
+      if (currentView === "dashboard") {
+        return (
+          <>
+            <FilterSection />
+            <StatsCards />
+            <ChartsSection />
+            <DataTable />
+            <MapSection />
+          </>
+        );
       }
     }
 
@@ -72,7 +89,7 @@ const Index = () => {
         <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-          <DashboardHeader />
+          <DashboardHeader currentView={currentView} />
           {renderContent()}
 
           <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">

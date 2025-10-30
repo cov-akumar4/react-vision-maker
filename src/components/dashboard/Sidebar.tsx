@@ -1,7 +1,8 @@
-import { ChartBar as BarChart3, Chrome as Home, FileText, Map, Settings, Users, X, Upload, CircleUser as UserCircle, LogOut } from "lucide-react";
+import { ChartBar as BarChart3, Chrome as Home, FileText, Map, Settings, Users, X, Upload, CircleUser as UserCircle, LogOut, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,9 +12,25 @@ interface SidebarProps {
   currentView: string;
 }
 
+interface MenuItem {
+  icon: any;
+  label: string;
+  view: string;
+  subItems?: { label: string; view: string }[];
+}
+
 export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentView }: SidebarProps) {
   const { profile, signOut, isAdmin, isClient } = useAuth();
   const { t } = useTranslation();
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+  const toggleMenu = (view: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(view)
+        ? prev.filter(v => v !== view)
+        : [...prev, view]
+    );
+  };
 
   const getMenuSections = () => {
     if (isAdmin) {
@@ -22,6 +39,30 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
           title: t('main'),
           items: [
             { icon: Home, label: t('dashboard'), view: "dashboard" },
+            {
+              icon: Upload,
+              label: t('inspections'),
+              view: "inspections",
+              subItems: [
+                { label: t('distribution'), view: "inspections/distribution" },
+                { label: t('transmission'), view: "inspections/transmission" },
+              ]
+            },
+            {
+              icon: Settings,
+              label: t('system'),
+              view: "system",
+              subItems: [
+                { label: t('elements'), view: "system/elements" },
+                { label: t('lamps'), view: "system/lamps" },
+                { label: t('cars'), view: "system/cars" },
+                { label: t('actions'), view: "system/actions" },
+                { label: t('methods'), view: "system/methods" },
+                { label: t('feeders'), view: "system/feeders" },
+                { label: t('eas'), view: "system/eas" },
+                { label: t('alarms'), view: "system/alarms" },
+              ]
+            },
             { icon: Users, label: t('clients'), view: "clients" },
           ],
         },
@@ -94,26 +135,63 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
               <div className="space-y-1">
                 {section.items.map((item, itemIdx) => {
                   const Icon = item.icon;
-                  const isActive = currentView === item.view;
+                  const isActive = currentView === item.view || currentView.startsWith(item.view + '/');
+                  const isExpanded = expandedMenus.includes(item.view);
+                  const hasSubItems = item.subItems && item.subItems.length > 0;
+
                   return (
-                    <Button
-                      key={itemIdx}
-                      variant={isActive ? "default" : "ghost"}
-                      onClick={() => {
-                        onNavigate(item.view);
-                        onClose();
-                      }}
-                      className={`
-                        w-full justify-start gap-3
-                        ${isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        }
-                      `}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </Button>
+                    <div key={itemIdx}>
+                      <Button
+                        variant={isActive && !hasSubItems ? "default" : "ghost"}
+                        onClick={() => {
+                          if (hasSubItems) {
+                            toggleMenu(item.view);
+                          } else {
+                            onNavigate(item.view);
+                            onClose();
+                          }
+                        }}
+                        className={`
+                          w-full justify-start gap-3
+                          ${isActive && !hasSubItems
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          }
+                        `}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {hasSubItems && (
+                          isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                        )}
+                      </Button>
+                      {hasSubItems && isExpanded && (
+                        <div className="ml-7 mt-1 space-y-1">
+                          {item.subItems!.map((subItem, subIdx) => {
+                            const isSubActive = currentView === subItem.view;
+                            return (
+                              <Button
+                                key={subIdx}
+                                variant={isSubActive ? "default" : "ghost"}
+                                onClick={() => {
+                                  onNavigate(subItem.view);
+                                  onClose();
+                                }}
+                                className={`
+                                  w-full justify-start text-sm
+                                  ${isSubActive
+                                    ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                  }
+                                `}
+                              >
+                                {subItem.label}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
