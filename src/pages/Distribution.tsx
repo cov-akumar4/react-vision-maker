@@ -22,20 +22,25 @@ interface DistributionRecord {
   vehicle: string;
   measures: { red: number; yellow: number };
   type: string;
+  lastMeasure: string;
 }
 
 const dummyData: DistributionRecord[] = [
-  { id: "1", name: "2025 EMT - RSI", ea: "RSI_088009_2014237", feeder: "FDR-001", status: "Finalizada", vehicle: "SW4", measures: { red: 5, yellow: 97 }, type: "Thermo-T" },
-  { id: "2", name: "2025 EMT - RSI", ea: "RSI_088009_2014238", feeder: "FDR-002", status: "En Progreso", vehicle: "SW5", measures: { red: 12, yellow: 45 }, type: "Visual" },
-  { id: "3", name: "2025 EMT - RSI", ea: "RSI_088009_2014239", feeder: "FDR-003", status: "Finalizada", vehicle: "SW4", measures: { red: 3, yellow: 120 }, type: "Thermo-T" },
-  { id: "4", name: "2025 EMT - RSI", ea: "RSI_088009_2014240", feeder: "FDR-004", status: "Pendiente", vehicle: "SW6", measures: { red: 8, yellow: 67 }, type: "Híbrido" },
-  { id: "5", name: "2025 EMT - RSI", ea: "RSI_088009_2014241", feeder: "FDR-005", status: "Finalizada", vehicle: "SW4", measures: { red: 2, yellow: 89 }, type: "Visual" },
-  { id: "6", name: "2025 EMT - RSI", ea: "RSI_088009_2014242", feeder: "FDR-001", status: "En Progreso", vehicle: "SW7", measures: { red: 15, yellow: 34 }, type: "Thermo-T" },
-  { id: "7", name: "2025 EMT - RSI", ea: "RSI_088009_2014243", feeder: "FDR-006", status: "Finalizada", vehicle: "SW5", measures: { red: 1, yellow: 156 }, type: "Visual" },
-  { id: "8", name: "2025 EMT - RSI", ea: "RSI_088009_2014244", feeder: "FDR-007", status: "Finalizada", vehicle: "SW4", measures: { red: 7, yellow: 78 }, type: "Thermo-T" },
+  { id: "1", name: "2025 EMT - RSI", ea: "RSI_088009_2014237", feeder: "FDR-001", status: "Finalizada", vehicle: "SW4", measures: { red: 5, yellow: 97 }, type: "Thermo-T", lastMeasure: "2025-10-28" },
+  { id: "2", name: "2025 EMT - RSI", ea: "RSI_088009_2014238", feeder: "FDR-002", status: "En Progreso", vehicle: "SW5", measures: { red: 12, yellow: 45 }, type: "Visual", lastMeasure: "2025-10-29" },
+  { id: "3", name: "2025 EMT - RSI", ea: "RSI_088009_2014239", feeder: "FDR-003", status: "Finalizada", vehicle: "SW4", measures: { red: 3, yellow: 120 }, type: "Thermo-T", lastMeasure: "2025-10-27" },
+  { id: "4", name: "2025 EMT - RSI", ea: "RSI_088009_2014240", feeder: "FDR-004", status: "Pendiente", vehicle: "SW6", measures: { red: 8, yellow: 67 }, type: "Híbrido", lastMeasure: "2025-10-26" },
+  { id: "5", name: "2025 EMT - RSI", ea: "RSI_088009_2014241", feeder: "FDR-005", status: "Finalizada", vehicle: "SW4", measures: { red: 2, yellow: 89 }, type: "Visual", lastMeasure: "2025-10-30" },
+  { id: "6", name: "2025 EMT - RSI", ea: "RSI_088009_2014242", feeder: "FDR-001", status: "En Progreso", vehicle: "SW7", measures: { red: 15, yellow: 34 }, type: "Thermo-T", lastMeasure: "2025-10-25" },
+  { id: "7", name: "2025 EMT - RSI", ea: "RSI_088009_2014243", feeder: "FDR-006", status: "Finalizada", vehicle: "SW5", measures: { red: 1, yellow: 156 }, type: "Visual", lastMeasure: "2025-10-24" },
+  { id: "8", name: "2025 EMT - RSI", ea: "RSI_088009_2014244", feeder: "FDR-007", status: "Finalizada", vehicle: "SW4", measures: { red: 7, yellow: 78 }, type: "Thermo-T", lastMeasure: "2025-10-23" },
 ];
 
-export default function Distribution() {
+interface DistributionProps {
+  onNavigate?: (view: string) => void;
+}
+
+export default function Distribution({ onNavigate }: DistributionProps) {
   const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({ from: new Date(2025, 7, 31), to: new Date(2025, 9, 30) });
   const [inspections, setInspections] = useState("");
@@ -79,6 +84,11 @@ export default function Distribution() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="text-sm text-muted-foreground">
+        Home &gt; Inspections &gt; Distribution
+      </div>
+
       {/* Filter Section */}
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
@@ -202,7 +212,8 @@ export default function Distribution() {
                 <TableHead>Vehicle</TableHead>
                 <TableHead>Measures</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>Last Measure</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -230,8 +241,13 @@ export default function Distribution() {
                     </div>
                   </TableCell>
                   <TableCell>{record.type}</TableCell>
+                  <TableCell>{record.lastMeasure}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm">
+                        Open
+                      </Button>
+                      <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
                           Action <ChevronDown className="ml-2 h-4 w-4" />
@@ -250,7 +266,7 @@ export default function Distribution() {
                           <FileText className="mr-2 h-4 w-4" />
                           Inspection Report
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onNavigate?.("inspections/distribution/upload")}>
                           <Upload className="mr-2 h-4 w-4" />
                           Upload
                         </DropdownMenuItem>
@@ -307,6 +323,7 @@ export default function Distribution() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

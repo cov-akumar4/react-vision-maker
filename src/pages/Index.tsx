@@ -13,6 +13,7 @@ import { ManageClients } from "@/components/ManageClients";
 import { ManageInspections } from "@/components/ManageInspections";
 import { ProfileModal } from "@/components/ProfileModal";
 import Distribution from "@/pages/Distribution";
+import UploadMeasures from "@/pages/UploadMeasures";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -27,7 +28,10 @@ const Index = () => {
         return <ManageClients />;
       }
       if (currentView === "inspections/distribution") {
-        return <Distribution />;
+        return <Distribution onNavigate={setCurrentView} />;
+      }
+      if (currentView === "inspections/distribution/upload") {
+        return <UploadMeasures />;
       }
       if (currentView.startsWith("inspections/")) {
         const subView = currentView.split('/')[1];
