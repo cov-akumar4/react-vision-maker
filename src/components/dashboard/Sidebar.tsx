@@ -1,4 +1,4 @@
-import { ChartBar as BarChart3, Chrome as Home, FileText, Map, Settings, Users, X, Upload, CircleUser as UserCircle, LogOut, ChevronDown, ChevronRight } from "lucide-react";
+import { ChartBar as BarChart3, Chrome as Home, FileText, Map, Settings, Users, X, Upload, CircleUser as UserCircle, LogOut, ChevronDown, ChevronRight, Zap, Radio, Box, Lightbulb, Car, Activity, Wrench, Plug, Wifi, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +17,7 @@ interface MenuItem {
   icon: any;
   label: string;
   view: string;
-  subItems?: { label: string; view: string }[];
+  subItems?: { label: string; view: string; icon?: any }[];
 }
 
 export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentView }: SidebarProps) {
@@ -45,8 +45,8 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
               label: t('inspections'),
               view: "inspections",
               subItems: [
-                { label: t('distribution'), view: "inspections/distribution" },
-                { label: t('transmission'), view: "inspections/transmission" },
+                { label: t('distribution'), view: "inspections/distribution", icon: Zap },
+                { label: t('transmission'), view: "inspections/transmission", icon: Radio },
               ]
             },
             {
@@ -54,14 +54,14 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
               label: t('system'),
               view: "system",
               subItems: [
-                { label: t('elements'), view: "system/elements" },
-                { label: t('lamps'), view: "system/lamps" },
-                { label: t('cars'), view: "system/cars" },
-                { label: t('actions'), view: "system/actions" },
-                { label: t('methods'), view: "system/methods" },
-                { label: t('feeders'), view: "system/feeders" },
-                { label: t('eas'), view: "system/eas" },
-                { label: t('alarms'), view: "system/alarms" },
+                { label: t('elements'), view: "system/elements", icon: Box },
+                { label: t('lamps'), view: "system/lamps", icon: Lightbulb },
+                { label: t('cars'), view: "system/cars", icon: Car },
+                { label: t('actions'), view: "system/actions", icon: Activity },
+                { label: t('methods'), view: "system/methods", icon: Wrench },
+                { label: t('feeders'), view: "system/feeders", icon: Plug },
+                { label: t('eas'), view: "system/eas", icon: Wifi },
+                { label: t('alarms'), view: "system/alarms", icon: Bell },
               ]
             },
             { icon: Users, label: t('clients'), view: "clients" },
@@ -171,6 +171,7 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
                         <div className="ml-7 mt-1 space-y-1">
                           {item.subItems!.map((subItem, subIdx) => {
                             const isSubActive = currentView === subItem.view;
+                            const SubIcon = subItem.icon;
                             return (
                               <Button
                                 key={subIdx}
@@ -180,13 +181,14 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
                                   onClose();
                                 }}
                                 className={`
-                                  w-full justify-start text-sm
+                                  w-full justify-start text-sm gap-2
                                   ${isSubActive
                                     ? "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                   }
                                 `}
                               >
+                                {SubIcon && <SubIcon className="w-3.5 h-3.5" />}
                                 {subItem.label}
                               </Button>
                             );
