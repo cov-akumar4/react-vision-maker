@@ -12,6 +12,7 @@ import { MapSection } from "@/components/dashboard/MapSection";
 import { ManageClients } from "@/components/ManageClients";
 import { ManageInspections } from "@/components/ManageInspections";
 import { ProfileModal } from "@/components/ProfileModal";
+import Distribution from "@/pages/Distribution";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -24,6 +25,9 @@ const Index = () => {
     if (isAdmin) {
       if (currentView === "clients") {
         return <ManageClients />;
+      }
+      if (currentView === "inspections/distribution") {
+        return <Distribution />;
       }
       if (currentView.startsWith("inspections/")) {
         const subView = currentView.split('/')[1];
