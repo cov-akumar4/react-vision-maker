@@ -1,5 +1,6 @@
 import { ChartBar as BarChart3, Chrome as Home, FileText, Map, Settings, Users, X, Upload, CircleUser as UserCircle, LogOut, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
@@ -99,7 +100,7 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-screen w-60 bg-sidebar border-r border-sidebar-border
+          fixed top-0 left-0 z-50 h-screen w-60 bg-sidebar border-r border-sidebar-border flex flex-col
           transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:z-30
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -116,7 +117,7 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
         </Button>
 
         {/* Logo */}
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="p-4 border-b border-sidebar-border flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
               <span className="text-xl font-bold text-sidebar-primary-foreground">P</span>
@@ -126,7 +127,8 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-6">
+        <ScrollArea className="flex-1">
+          <nav className="p-4 space-y-6">
           {menuSections.map((section, sectionIdx) => (
             <div key={sectionIdx}>
               <h3 className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">
@@ -197,10 +199,11 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
               </div>
             </div>
           ))}
-        </nav>
+          </nav>
+        </ScrollArea>
 
         {/* User Info & Logout */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border bg-sidebar">
+        <div className="flex-shrink-0 p-4 border-t border-sidebar-border bg-sidebar">
           <div className="space-y-3">
             <button
               onClick={() => {
