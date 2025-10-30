@@ -66,11 +66,6 @@ export default function UploadMeasures() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-muted-foreground">
-        Home &gt; Inspections &gt; Distribution &gt; Upload
-      </div>
-
       {/* Tabs */}
       <Tabs defaultValue="vehicle" className="w-full">
         <TabsList className="w-full justify-start">

@@ -97,7 +97,7 @@ const Index = () => {
         <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-          <DashboardHeader currentView={currentView} />
+          <DashboardHeader currentView={currentView} onNavigate={setCurrentView} />
           {renderContent()}
 
           <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">

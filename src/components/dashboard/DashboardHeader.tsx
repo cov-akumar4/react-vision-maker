@@ -3,9 +3,10 @@ import { ChevronRight } from 'lucide-react';
 
 interface DashboardHeaderProps {
   currentView: string;
+  onNavigate?: (view: string) => void;
 }
 
-export function DashboardHeader({ currentView }: DashboardHeaderProps) {
+export function DashboardHeader({ currentView, onNavigate }: DashboardHeaderProps) {
   const { t } = useTranslation();
 
   const getBreadcrumbs = () => {
@@ -14,7 +15,15 @@ export function DashboardHeader({ currentView }: DashboardHeaderProps) {
 
     if (parts[0] === 'inspections' && parts.length > 1) {
       breadcrumbs.push({ label: t('inspections'), path: 'inspections' });
-      breadcrumbs.push({ label: t(parts[1]), path: currentView });
+      if (parts.length === 2) {
+        breadcrumbs.push({ label: t(parts[1]), path: currentView });
+      } else if (parts.length > 2) {
+        breadcrumbs.push({ label: t(parts[1]), path: `inspections/${parts[1]}` });
+        for (let i = 2; i < parts.length; i++) {
+          const path = parts.slice(0, i + 1).join('/');
+          breadcrumbs.push({ label: t(parts[i]), path });
+        }
+      }
     } else if (parts[0] === 'system' && parts.length > 1) {
       breadcrumbs.push({ label: t('system'), path: 'system' });
       breadcrumbs.push({ label: t(parts[1]), path: currentView });
@@ -33,9 +42,16 @@ export function DashboardHeader({ currentView }: DashboardHeaderProps) {
         {breadcrumbs.map((crumb, index) => (
           <div key={index} className="flex items-center gap-2">
             {index > 0 && <ChevronRight className="w-4 h-4" />}
-            <span className={index === breadcrumbs.length - 1 ? 'text-foreground font-medium' : ''}>
-              {crumb.label}
-            </span>
+            {index === breadcrumbs.length - 1 ? (
+              <span className="text-foreground font-medium">{crumb.label}</span>
+            ) : (
+              <button
+                onClick={() => onNavigate?.(crumb.path)}
+                className="hover:text-foreground transition-colors cursor-pointer"
+              >
+                {crumb.label}
+              </button>
+            )}
           </div>
         ))}
       </div>
