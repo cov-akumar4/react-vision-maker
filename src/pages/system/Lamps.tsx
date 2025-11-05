@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Edit, Trash2, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Lamp {
   id: string;
@@ -21,11 +25,17 @@ const mockLamps: Lamp[] = [
 ];
 
 export default function Lamps() {
+  const [lamps, setLamps] = useState<Lamp[]>(mockLamps);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [sortField, setSortField] = useState<keyof Lamp | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingLamp, setEditingLamp] = useState<Lamp | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "" });
 
   const handleSort = (field: keyof Lamp) => {
     if (sortField === field) {
@@ -36,7 +46,58 @@ export default function Lamps() {
     }
   };
 
-  let filteredLamps = mockLamps.filter((lamp) =>
+  const handleCreate = () => {
+    setEditingLamp(null);
+    setFormData({ name: "" });
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (lamp: Lamp) => {
+    setEditingLamp(lamp);
+    setFormData({ name: lamp.name });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      setLamps(lamps.filter(l => l.id !== deleteId));
+      toast({ title: "Success", description: "Lamp deleted successfully" });
+    }
+    setIsDeleteDialogOpen(false);
+    setDeleteId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim()) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
+    if (editingLamp) {
+      setLamps(lamps.map(l => 
+        l.id === editingLamp.id 
+          ? { ...l, ...formData, lastUpdate: new Date().toLocaleString() }
+          : l
+      ));
+      toast({ title: "Success", description: "Lamp updated successfully" });
+    } else {
+      const newLamp: Lamp = {
+        id: crypto.randomUUID(),
+        ...formData,
+        lastUpdate: new Date().toLocaleString()
+      };
+      setLamps([...lamps, newLamp]);
+      toast({ title: "Success", description: "Lamp created successfully" });
+    }
+    setIsDialogOpen(false);
+  };
+
+  let filteredLamps = lamps.filter((lamp) =>
     Object.values(lamp).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -60,8 +121,12 @@ export default function Lamps() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold mb-2">Lamps</h1>
+        <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Lamp
+        </Button>
       </div>
 
       <Card className="p-6">
@@ -111,6 +176,7 @@ export default function Lamps() {
                     LAST UPDATE <ArrowUpDown className="w-4 h-4" />
                   </div>
                 </TableHead>
+                <TableHead>ACTIONS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -119,6 +185,16 @@ export default function Lamps() {
                   <TableCell className="font-mono text-xs">{lamp.id}</TableCell>
                   <TableCell className="font-medium">{lamp.name}</TableCell>
                   <TableCell className="text-muted-foreground">{lamp.lastUpdate}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleEdit(lamp)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" onClick={() => handleDelete(lamp.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -159,6 +235,51 @@ export default function Lamps() {
           </div>
         </div>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingLamp ? "Edit Lamp" : "Create New Lamp"}</DialogTitle>
+            <DialogDescription>
+              {editingLamp ? "Update the lamp details below." : "Fill in the details for the new lamp."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter lamp name"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {editingLamp ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the lamp from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

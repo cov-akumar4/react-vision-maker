@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowUpDown } from "lucide-react";
+import { Plus, ArrowUpDown, Edit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Element {
   id: string;
@@ -23,11 +27,17 @@ const mockElements: Element[] = [
 ];
 
 export default function Elements() {
+  const [elements, setElements] = useState<Element[]>(mockElements);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [sortField, setSortField] = useState<keyof Element | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingElement, setEditingElement] = useState<Element | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "", tag: "", index: 0 });
 
   const handleSort = (field: keyof Element) => {
     if (sortField === field) {
@@ -38,7 +48,58 @@ export default function Elements() {
     }
   };
 
-  let filteredElements = mockElements.filter((element) =>
+  const handleCreate = () => {
+    setEditingElement(null);
+    setFormData({ name: "", tag: "", index: 0 });
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (element: Element) => {
+    setEditingElement(element);
+    setFormData({ name: element.name, tag: element.tag, index: element.index });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      setElements(elements.filter(e => e.id !== deleteId));
+      toast({ title: "Success", description: "Element deleted successfully" });
+    }
+    setIsDeleteDialogOpen(false);
+    setDeleteId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim() || !formData.tag.trim()) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
+    if (editingElement) {
+      setElements(elements.map(e => 
+        e.id === editingElement.id 
+          ? { ...e, ...formData, lastUpdate: new Date().toLocaleString() }
+          : e
+      ));
+      toast({ title: "Success", description: "Element updated successfully" });
+    } else {
+      const newElement: Element = {
+        id: crypto.randomUUID(),
+        ...formData,
+        lastUpdate: new Date().toLocaleString()
+      };
+      setElements([...elements, newElement]);
+      toast({ title: "Success", description: "Element created successfully" });
+    }
+    setIsDialogOpen(false);
+  };
+
+  let filteredElements = elements.filter((element) =>
     Object.values(element).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -67,7 +128,7 @@ export default function Elements() {
           <h1 className="text-3xl font-bold mb-2">Elements</h1>
           <p className="text-muted-foreground">System Components Overview and Management</p>
         </div>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus className="w-4 h-4 mr-2" />
           Add New Element
         </Button>
@@ -130,6 +191,7 @@ export default function Elements() {
                     LAST UPDATE <ArrowUpDown className="w-4 h-4" />
                   </div>
                 </TableHead>
+                <TableHead>ACTIONS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -140,6 +202,16 @@ export default function Elements() {
                   <TableCell>{element.tag}</TableCell>
                   <TableCell>{element.index}</TableCell>
                   <TableCell className="text-muted-foreground">{element.lastUpdate}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleEdit(element)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" onClick={() => handleDelete(element.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -180,6 +252,70 @@ export default function Elements() {
           </div>
         </div>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingElement ? "Edit Element" : "Create New Element"}</DialogTitle>
+            <DialogDescription>
+              {editingElement ? "Update the element details below." : "Fill in the details for the new element."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter element name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tag">Tag *</Label>
+              <Input
+                id="tag"
+                value={formData.tag}
+                onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                placeholder="Enter element tag"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="index">Index</Label>
+              <Input
+                id="index"
+                type="number"
+                value={formData.index}
+                onChange={(e) => setFormData({ ...formData, index: parseInt(e.target.value) || 0 })}
+                placeholder="Enter index"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {editingElement ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the element from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

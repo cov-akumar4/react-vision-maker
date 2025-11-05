@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Edit, Trash2, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Action {
   id: string;
@@ -22,11 +26,17 @@ const mockActions: Action[] = [
 ];
 
 export default function Actions() {
+  const [actions, setActions] = useState<Action[]>(mockActions);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [sortField, setSortField] = useState<keyof Action | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingAction, setEditingAction] = useState<Action | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "", priority: 1 });
 
   const handleSort = (field: keyof Action) => {
     if (sortField === field) {
@@ -37,7 +47,58 @@ export default function Actions() {
     }
   };
 
-  let filteredActions = mockActions.filter((action) =>
+  const handleCreate = () => {
+    setEditingAction(null);
+    setFormData({ name: "", priority: 1 });
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (action: Action) => {
+    setEditingAction(action);
+    setFormData({ name: action.name, priority: action.priority });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      setActions(actions.filter(a => a.id !== deleteId));
+      toast({ title: "Success", description: "Action deleted successfully" });
+    }
+    setIsDeleteDialogOpen(false);
+    setDeleteId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim()) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
+    if (editingAction) {
+      setActions(actions.map(a => 
+        a.id === editingAction.id 
+          ? { ...a, ...formData, lastUpdate: new Date().toLocaleString() }
+          : a
+      ));
+      toast({ title: "Success", description: "Action updated successfully" });
+    } else {
+      const newAction: Action = {
+        id: `ACT-${String(actions.length + 1).padStart(3, '0')}`,
+        ...formData,
+        lastUpdate: new Date().toLocaleString()
+      };
+      setActions([...actions, newAction]);
+      toast({ title: "Success", description: "Action created successfully" });
+    }
+    setIsDialogOpen(false);
+  };
+
+  let filteredActions = actions.filter((action) =>
     Object.values(action).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -61,8 +122,12 @@ export default function Actions() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold mb-2">Actions</h1>
+        <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Action
+        </Button>
       </div>
 
       <Card className="p-6">
@@ -117,6 +182,7 @@ export default function Actions() {
                     LAST UPDATE <ArrowUpDown className="w-4 h-4" />
                   </div>
                 </TableHead>
+                <TableHead>ACTIONS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,6 +192,16 @@ export default function Actions() {
                   <TableCell>{action.name}</TableCell>
                   <TableCell>{action.priority}</TableCell>
                   <TableCell className="text-muted-foreground">{action.lastUpdate}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleEdit(action)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" onClick={() => handleDelete(action.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -166,6 +242,61 @@ export default function Actions() {
           </div>
         </div>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingAction ? "Edit Action" : "Create New Action"}</DialogTitle>
+            <DialogDescription>
+              {editingAction ? "Update the action details below." : "Fill in the details for the new action."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter action name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Input
+                id="priority"
+                type="number"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
+                placeholder="Enter priority"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {editingAction ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the action from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

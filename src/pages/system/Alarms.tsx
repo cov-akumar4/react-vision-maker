@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUpDown, Edit, Trash2 } from "lucide-react";
+import { ArrowUpDown, Edit, Trash2, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 interface Alarm {
   id: string;
@@ -25,11 +29,23 @@ const mockAlarms: Alarm[] = [
 ];
 
 export default function Alarms() {
+  const [alarms, setAlarms] = useState<Alarm[]>(mockAlarms);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [sortField, setSortField] = useState<keyof Alarm | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ 
+    element: "", 
+    method: "", 
+    action: "", 
+    min: 0, 
+    max: 0 
+  });
 
   const handleSort = (field: keyof Alarm) => {
     if (sortField === field) {
@@ -40,7 +56,64 @@ export default function Alarms() {
     }
   };
 
-  let filteredAlarms = mockAlarms.filter((alarm) =>
+  const handleCreate = () => {
+    setEditingAlarm(null);
+    setFormData({ element: "", method: "", action: "", min: 0, max: 0 });
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (alarm: Alarm) => {
+    setEditingAlarm(alarm);
+    setFormData({ 
+      element: alarm.element, 
+      method: alarm.method, 
+      action: alarm.action, 
+      min: alarm.min, 
+      max: alarm.max 
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      setAlarms(alarms.filter(a => a.id !== deleteId));
+      toast({ title: "Success", description: "Alarm deleted successfully" });
+    }
+    setIsDeleteDialogOpen(false);
+    setDeleteId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.element.trim() || !formData.method.trim() || !formData.action.trim()) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
+    if (editingAlarm) {
+      setAlarms(alarms.map(a => 
+        a.id === editingAlarm.id 
+          ? { ...a, ...formData, lastUpdate: new Date().toLocaleString() }
+          : a
+      ));
+      toast({ title: "Success", description: "Alarm updated successfully" });
+    } else {
+      const newAlarm: Alarm = {
+        id: `ALM-${String(alarms.length + 1).padStart(3, '0')}`,
+        ...formData,
+        lastUpdate: new Date().toLocaleString()
+      };
+      setAlarms([...alarms, newAlarm]);
+      toast({ title: "Success", description: "Alarm created successfully" });
+    }
+    setIsDialogOpen(false);
+  };
+
+  let filteredAlarms = alarms.filter((alarm) =>
     Object.values(alarm).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -64,8 +137,12 @@ export default function Alarms() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold mb-2">Alarms</h1>
+        <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Alarm
+        </Button>
       </div>
 
       <Card className="p-6">
@@ -144,10 +221,10 @@ export default function Alarms() {
                   <TableCell className="text-muted-foreground">{alarm.lastUpdate}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                      <Button size="sm" onClick={() => handleEdit(alarm)} className="bg-primary text-primary-foreground hover:bg-primary/90">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button size="sm" className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <Button size="sm" onClick={() => handleDelete(alarm.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -192,6 +269,91 @@ export default function Alarms() {
           </div>
         </div>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingAlarm ? "Edit Alarm" : "Create New Alarm"}</DialogTitle>
+            <DialogDescription>
+              {editingAlarm ? "Update the alarm details below." : "Fill in the details for the new alarm."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="element">Element *</Label>
+              <Input
+                id="element"
+                value={formData.element}
+                onChange={(e) => setFormData({ ...formData, element: e.target.value })}
+                placeholder="Enter element"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="method">Method *</Label>
+              <Input
+                id="method"
+                value={formData.method}
+                onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                placeholder="Enter method"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="action">Action *</Label>
+              <Input
+                id="action"
+                value={formData.action}
+                onChange={(e) => setFormData({ ...formData, action: e.target.value })}
+                placeholder="Enter action"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="min">Min (°C)</Label>
+                <Input
+                  id="min"
+                  type="number"
+                  value={formData.min}
+                  onChange={(e) => setFormData({ ...formData, min: parseFloat(e.target.value) || 0 })}
+                  placeholder="Enter min"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="max">Max (°C)</Label>
+                <Input
+                  id="max"
+                  type="number"
+                  value={formData.max}
+                  onChange={(e) => setFormData({ ...formData, max: parseFloat(e.target.value) || 0 })}
+                  placeholder="Enter max"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {editingAlarm ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the alarm from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
