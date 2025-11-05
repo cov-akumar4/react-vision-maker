@@ -14,6 +14,7 @@ import { ManageInspections } from "@/components/ManageInspections";
 import { ProfileModal } from "@/components/ProfileModal";
 import Distribution from "@/pages/Distribution";
 import UploadMeasures from "@/pages/UploadMeasures";
+import Feeders from "@/pages/Feeders";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -41,6 +42,9 @@ const Index = () => {
             <p className="text-muted-foreground">{t('comingSoon')}</p>
           </div>
         );
+      }
+      if (currentView === "system/feeders") {
+        return <Feeders />;
       }
       if (currentView.startsWith("system/")) {
         const subView = currentView.split('/')[1];
