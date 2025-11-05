@@ -15,6 +15,12 @@ import { ProfileModal } from "@/components/ProfileModal";
 import Distribution from "@/pages/Distribution";
 import UploadMeasures from "@/pages/UploadMeasures";
 import Feeders from "@/pages/Feeders";
+import Elements from "@/pages/system/Elements";
+import Lamps from "@/pages/system/Lamps";
+import Cars from "@/pages/system/Cars";
+import Actions from "@/pages/system/Actions";
+import Methods from "@/pages/system/Methods";
+import Alarms from "@/pages/system/Alarms";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -45,6 +51,24 @@ const Index = () => {
       }
       if (currentView === "system/feeders") {
         return <Feeders />;
+      }
+      if (currentView === "system/elements") {
+        return <Elements />;
+      }
+      if (currentView === "system/lamps") {
+        return <Lamps />;
+      }
+      if (currentView === "system/cars") {
+        return <Cars />;
+      }
+      if (currentView === "system/actions") {
+        return <Actions />;
+      }
+      if (currentView === "system/methods") {
+        return <Methods />;
+      }
+      if (currentView === "system/alarms") {
+        return <Alarms />;
       }
       if (currentView.startsWith("system/")) {
         const subView = currentView.split('/')[1];

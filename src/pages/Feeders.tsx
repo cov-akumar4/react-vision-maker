@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus } from "lucide-react";
 import { MapContainer, TileLayer } from "react-leaflet";
+import type { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface Feeder {
@@ -142,10 +143,12 @@ export default function Feeders() {
         <div className="col-span-9 relative">
           <Card className="h-[700px] overflow-hidden">
             <MapContainer
-              center={[40.7128, -74.0060]}
-              zoom={13}
-              scrollWheelZoom={true}
-              style={{ height: "100%", width: "100%" }}
+              {...({
+                center: [40.7128, -74.0060],
+                zoom: 13,
+                scrollWheelZoom: true,
+                style: { height: "100%", width: "100%" }
+              } as any)}
             >
               <TileLayer
                 url={
@@ -153,7 +156,6 @@ export default function Feeders() {
                     ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 }
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
             </MapContainer>
           </Card>
