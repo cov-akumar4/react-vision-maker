@@ -1,20 +1,38 @@
+"use client";
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, Upload } from "lucide-react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  GeoJSON,
+  useMap,
+  ZoomControl,
+} from "react-leaflet";
 import type { Map as LeafletMap } from "leaflet";
 import * as toGeoJSON from "@tmcw/togeojson";
 import { toast } from "@/hooks/use-toast";
 import "leaflet/dist/leaflet.css";
 
-// Map reference component
-function MapController({ mapRef }: { mapRef: React.MutableRefObject<LeafletMap | null> }) {
+function MapController({
+  mapRef,
+}: {
+  mapRef: React.MutableRefObject<LeafletMap | null>;
+}) {
   const map = useMap();
   mapRef.current = map;
   return null;
@@ -60,7 +78,9 @@ export default function Feeders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [mapType, setMapType] = useState("streets");
-  const [selectedLayers, setSelectedLayers] = useState<string[]>(layerOptions.map(opt => opt.id));
+  const [selectedLayers, setSelectedLayers] = useState<string[]>(
+    layerOptions.map((opt) => opt.id)
+  );
   const [feeders, setFeeders] = useState<Feeder[]>(initialFeeders);
   const [selectedFeeder, setSelectedFeeder] = useState<string | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -79,72 +99,98 @@ export default function Feeders() {
     currentPage * itemsPerPage
   );
 
-  const toggleLayer = (layerId: string) => {
-    setSelectedLayers(prev =>
-      prev.includes(layerId)
-        ? prev.filter(id => id !== layerId)
-        : [...prev, layerId]
+  const toggleLayer = (id: string) => {
+    setSelectedLayers((prev) =>
+      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
     );
   };
 
-  const handleKmlUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const getAllCoordinates = (geometry: any): number[][] => {
+    const coords: number[][] = [];
+
+    const extract = (geom: any) => {
+      if (geom.type === "Point") return;
+      if (geom.type === "LineString") coords.push(...geom.coordinates);
+      else if (geom.type === "Polygon")
+        geom.coordinates.forEach((ring: number[][]) => coords.push(...ring));
+      else if (
+        geom.type === "MultiLineString" ||
+        geom.type === "MultiPolygon"
+      ) {
+        geom.coordinates.forEach((part: any) => {
+          part.forEach((sub: any) => coords.push(...sub));
+        });
+      } else if (geom.type === "GeometryCollection")
+        geom.geometries.forEach((g: any) => extract(g));
+    };
+
+    extract(geometry);
+    return coords;
+  };
+
+  const handleKmlUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (ev) => {
       try {
-        const kmlText = e.target?.result as string;
-        const parser = new DOMParser();
-        const kml = parser.parseFromString(kmlText, "text/xml");
-        const geoJson = toGeoJSON.kml(kml);
-        
-        // Create a single combined feeder from the entire KML file
-        if (geoJson.features && Array.isArray(geoJson.features) && geoJson.features.length > 0) {
-          const fileName = file.name.replace('.kml', '');
-          const firstFeature = geoJson.features[0];
-          const ea = firstFeature.properties?.ea || firstFeature.properties?.EA || "-";
-          const region = firstFeature.properties?.region || firstFeature.properties?.REGION || "-";
-          
-          // Calculate bounds for all features combined
-          let bounds: [[number, number], [number, number]] | undefined;
-          const allCoords: number[][] = [];
-          
-          geoJson.features.forEach((feature: any) => {
-            if (feature.geometry) {
-              const coords = getAllCoordinates(feature.geometry);
-              allCoords.push(...coords);
-            }
+        const text = ev.target?.result as string;
+        const doc = new DOMParser().parseFromString(text, "text/xml");
+        const geoJson = toGeoJSON.kml(doc);
+
+        if (geoJson?.features?.length > 0) {
+          const fileName = file.name.replace(".kml", "");
+
+          // ✅ Filter to keep only line-based features
+          const lineFeatures = geoJson.features.filter(
+            (f: any) =>
+              f.geometry?.type === "LineString" ||
+              f.geometry?.type === "MultiLineString" ||
+              f.geometry?.type === "Polygon" ||
+              f.geometry?.type === "MultiPolygon"
+          );
+
+          const filteredGeoJson = {
+            ...geoJson,
+            features: lineFeatures,
+          };
+
+          let bounds;
+          const all: number[][] = [];
+
+          lineFeatures.forEach((f: any) => {
+            if (f.geometry) all.push(...getAllCoordinates(f.geometry));
           });
-          
-          if (allCoords.length > 0) {
-            const lats = allCoords.map(c => c[1]);
-            const lngs = allCoords.map(c => c[0]);
+
+          if (all.length > 0) {
+            const lats = all.map((c) => c[1]);
+            const lngs = all.map((c) => c[0]);
             bounds = [
               [Math.min(...lats), Math.min(...lngs)],
-              [Math.max(...lats), Math.max(...lngs)]
-            ];
+              [Math.max(...lats), Math.max(...lngs)],
+            ] as [[number, number], [number, number]];
           }
-          
+
           const newFeeder: Feeder = {
             id: `kml-${Date.now()}`,
             feeder: fileName,
-            ea,
-            region,
-            geoJson: geoJson, // Store the entire FeatureCollection
-            bounds
+            ea: "-",
+            region: "-",
+            geoJson: filteredGeoJson,
+            bounds,
           };
-          
-          setFeeders(prev => [...prev, newFeeder]);
+
+          setFeeders((p) => [...p, newFeeder]);
           toast({
-            title: "KML file loaded",
-            description: `Added "${fileName}" to feeders list.`,
+            title: "KML Loaded",
+            description: `${fileName} added.`,
           });
         }
-      } catch (error) {
+      } catch (err) {
         toast({
           title: "Error",
-          description: "Failed to parse KML file.",
+          description: "Failed to parse KML",
           variant: "destructive",
         });
       }
@@ -152,50 +198,24 @@ export default function Feeders() {
     reader.readAsText(file);
   };
 
-  // Helper function to extract all coordinates from a geometry
-  const getAllCoordinates = (geometry: any): number[][] => {
-    const coords: number[][] = [];
-    
-    const extractCoords = (geom: any) => {
-      if (geom.type === 'Point') {
-        coords.push(geom.coordinates);
-      } else if (geom.type === 'LineString') {
-        coords.push(...geom.coordinates);
-      } else if (geom.type === 'Polygon') {
-        geom.coordinates.forEach((ring: number[][]) => coords.push(...ring));
-      } else if (geom.type === 'MultiLineString' || geom.type === 'MultiPolygon') {
-        geom.coordinates.forEach((part: any) => {
-          if (Array.isArray(part[0]) && typeof part[0][0] === 'number') {
-            coords.push(...part);
-          } else {
-            part.forEach((subPart: any) => coords.push(...subPart));
-          }
-        });
-      } else if (geom.type === 'GeometryCollection') {
-        geom.geometries.forEach((g: any) => extractCoords(g));
-      }
-    };
-    
-    extractCoords(geometry);
-    return coords;
-  };
-
   const handleFeederClick = (feeder: Feeder) => {
     setSelectedFeeder(feeder.id);
     if (feeder.bounds && mapRef.current) {
       mapRef.current.fitBounds(feeder.bounds, {
-        padding: [50, 50],
+        paddingTopLeft: [80, 80],
+        paddingBottomRight: [80, 80],
         animate: true,
       });
     }
   };
 
-  const selectedFeederData = feeders.find(f => f.id === selectedFeeder);
+  const selectedFeederData = feeders.find((f) => f.id === selectedFeeder);
 
   return (
     <div className="space-y-6 h-screen flex flex-col">
-      <div className="flex items-center justify-between flex-shrink-0">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Feeders</h1>
+
         <div className="flex gap-2">
           <input
             ref={fileInputRef}
@@ -205,18 +225,16 @@ export default function Feeders() {
             className="hidden"
           />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload KML
+            <Upload className="w-4 h-4 mr-2" /> Upload KML
           </Button>
           <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add
+            <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
-        {/* Left Sidebar - Feeder List */}
+        {/* LEFT */}
         <div className="col-span-3 space-y-4 flex flex-col overflow-hidden">
           <div>
             <Label className="text-sm mb-2 block">Search:</Label>
@@ -227,127 +245,135 @@ export default function Feeders() {
             />
           </div>
 
-          <Card className="overflow-hidden flex-1 flex flex-col">
-            <div className="overflow-auto flex-1">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>FEEDER</TableHead>
-                    <TableHead>EA</TableHead>
-                    <TableHead>REGION</TableHead>
+          <Card className="flex-1 overflow-auto">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white z-10">
+                <TableRow>
+                  <TableHead />
+                  <TableHead>FEEDER</TableHead>
+                  <TableHead>EA</TableHead>
+                  <TableHead>REGION</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedFeeders.map((feeder) => (
+                  <TableRow
+                    key={feeder.id}
+                    onClick={() => handleFeederClick(feeder)}
+                    className={`cursor-pointer hover:bg-blue-50 ${
+                      selectedFeeder === feeder.id ? "bg-blue-100" : ""
+                    }`}
+                  >
+                    <TableCell>
+                      <Checkbox />
+                    </TableCell>
+                    <TableCell>{feeder.feeder}</TableCell>
+                    <TableCell>{feeder.ea}</TableCell>
+                    <TableCell>{feeder.region}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedFeeders.map((feeder) => (
-                    <TableRow 
-                      key={feeder.id} 
-                      className={`cursor-pointer hover:bg-muted/50 ${selectedFeeder === feeder.id ? 'bg-primary/10' : ''}`}
-                      onClick={() => handleFeederClick(feeder)}
-                    >
-                      <TableCell>
-                        <Checkbox />
-                      </TableCell>
-                      <TableCell className="font-medium">{feeder.feeder}</TableCell>
-                      <TableCell>{feeder.ea}</TableCell>
-                      <TableCell>{feeder.region}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           </Card>
 
           <div className="flex justify-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             >
               Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             >
               Next
             </Button>
           </div>
         </div>
 
-        {/* Map Area */}
+        {/* MAP */}
         <div className="col-span-9 relative h-full">
-          <Card className="h-full overflow-hidden">
+          <Card className="h-full overflow-hidden border border-gray-300">
             <MapContainer
-              {...{
-                center: [40.7128, -74.0060] as [number, number],
-                zoom: 13,
-                scrollWheelZoom: true,
-                style: { height: "100%", width: "100%" }
-              } as any}
+              center={[-23.5505, -46.6333]}
+              zoom={14}
+              scrollWheelZoom
+              zoomControl={false}
+              style={{ height: "100%", width: "100%" }}
             >
               <MapController mapRef={mapRef} />
+
+              <ZoomControl position="topleft" />
+
               <TileLayer
                 url={
                   mapType === "satellite"
                     ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 }
+                attribution="© CARTO | © OpenStreetMap"
               />
+
+              {/* ✅ RENDER ONLY LINES */}
               {selectedFeederData?.geoJson && (
                 <GeoJSON
                   key={selectedFeeder}
                   data={selectedFeederData.geoJson}
-                  pathOptions={{
-                    color: "#2563eb",
+                  style={{
+                    color: "#0066ff",
                     weight: 3,
-                    opacity: 0.8,
+                    opacity: 0.9,
                   }}
+                  pointToLayer={() => null} // ✅ Prevent markers for Point geometries
                 />
               )}
             </MapContainer>
           </Card>
 
-          {/* Map Controls Overlay - Top Right */}
-          <div className="absolute top-4 right-4 bg-white dark:bg-card rounded-lg shadow-lg p-4 space-y-4 max-w-xs z-[1000]">
+          {/* RIGHT PANEL */}
+          <div className="absolute top-4 right-4 bg-white/95 rounded-md shadow-md p-3 space-y-3 text-sm w-48 z-[1000]">
             <div>
-              <Label className="text-sm font-semibold mb-2 block">Map Type</Label>
+              <Label className="text-xs font-semibold">Map Type</Label>
               <RadioGroup value={mapType} onValueChange={setMapType}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="satellite" id="satellite" />
-                  <Label htmlFor="satellite" className="font-normal cursor-pointer">Satellite</Label>
+                  <Label htmlFor="satellite" className="cursor-pointer">
+                    Satellite
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="streets" id="streets" />
-                  <Label htmlFor="streets" className="font-normal cursor-pointer">Streets</Label>
+                  <Label htmlFor="streets" className="cursor-pointer">
+                    Streets
+                  </Label>
                 </div>
               </RadioGroup>
             </div>
 
-            <div className="border-t pt-3">
-              <Label className="text-sm font-semibold mb-2 block">Layers</Label>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {layerOptions.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2">
+            <div>
+              <Label className="text-xs font-semibold">Layers</Label>
+              <div className="max-h-52 overflow-y-auto space-y-1 mt-1">
+                {layerOptions.map((l) => (
+                  <div key={l.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={option.id}
-                      checked={selectedLayers.includes(option.id)}
-                      onCheckedChange={() => toggleLayer(option.id)}
+                      id={l.id}
+                      checked={selectedLayers.includes(l.id)}
+                      onCheckedChange={() => toggleLayer(l.id)}
                     />
-                    <Label
-                      htmlFor={option.id}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {option.label}
+                    <Label htmlFor={l.id} className="cursor-pointer text-sm">
+                      {l.label}
                     </Label>
                   </div>
                 ))}
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
