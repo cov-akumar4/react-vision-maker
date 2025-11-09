@@ -25,10 +25,11 @@ interface Feeder {
   feeder: string;
   ea: string;
   region: string;
-  coordinates?: [number, number];
+  geoJson?: any;
+  bounds?: [[number, number], [number, number]];
 }
 
-const dummyFeeders: Feeder[] = [
+const initialFeeders: Feeder[] = [
   { id: "1", feeder: "001005", ea: "-", region: "-" },
   { id: "2", feeder: "001019", ea: "-", region: "-" },
   { id: "3", feeder: "001042", ea: "-", region: "-" },
@@ -60,12 +61,12 @@ export default function Feeders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [mapType, setMapType] = useState("streets");
   const [selectedLayers, setSelectedLayers] = useState<string[]>(layerOptions.map(opt => opt.id));
-  const [kmlData, setKmlData] = useState<any>(null);
+  const [feeders, setFeeders] = useState<Feeder[]>(initialFeeders);
   const [selectedFeeder, setSelectedFeeder] = useState<string | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredFeeders = dummyFeeders.filter((feeder) =>
+  const filteredFeeders = feeders.filter((feeder) =>
     Object.values(feeder).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -97,10 +98,44 @@ export default function Feeders() {
         const parser = new DOMParser();
         const kml = parser.parseFromString(kmlText, "text/xml");
         const geoJson = toGeoJSON.kml(kml);
-        setKmlData(geoJson);
+        
+        // Extract feeders from KML features
+        const newFeeders: Feeder[] = [];
+        if (geoJson.features && Array.isArray(geoJson.features)) {
+          geoJson.features.forEach((feature: any, index: number) => {
+            const feederName = feature.properties?.name || `Feeder-${Date.now()}-${index}`;
+            const ea = feature.properties?.ea || feature.properties?.EA || "-";
+            const region = feature.properties?.region || feature.properties?.REGION || "-";
+            
+            // Calculate bounds for the feature
+            let bounds: [[number, number], [number, number]] | undefined;
+            if (feature.geometry) {
+              const coords = getAllCoordinates(feature.geometry);
+              if (coords.length > 0) {
+                const lats = coords.map(c => c[1]);
+                const lngs = coords.map(c => c[0]);
+                bounds = [
+                  [Math.min(...lats), Math.min(...lngs)],
+                  [Math.max(...lats), Math.max(...lngs)]
+                ];
+              }
+            }
+            
+            newFeeders.push({
+              id: `kml-${Date.now()}-${index}`,
+              feeder: feederName,
+              ea,
+              region,
+              geoJson: feature,
+              bounds
+            });
+          });
+        }
+        
+        setFeeders(prev => [...prev, ...newFeeders]);
         toast({
           title: "KML file loaded",
-          description: "The KML file has been successfully loaded on the map.",
+          description: `Added ${newFeeders.length} feeder(s) from KML file.`,
         });
       } catch (error) {
         toast({
@@ -113,14 +148,45 @@ export default function Feeders() {
     reader.readAsText(file);
   };
 
+  // Helper function to extract all coordinates from a geometry
+  const getAllCoordinates = (geometry: any): number[][] => {
+    const coords: number[][] = [];
+    
+    const extractCoords = (geom: any) => {
+      if (geom.type === 'Point') {
+        coords.push(geom.coordinates);
+      } else if (geom.type === 'LineString') {
+        coords.push(...geom.coordinates);
+      } else if (geom.type === 'Polygon') {
+        geom.coordinates.forEach((ring: number[][]) => coords.push(...ring));
+      } else if (geom.type === 'MultiLineString' || geom.type === 'MultiPolygon') {
+        geom.coordinates.forEach((part: any) => {
+          if (Array.isArray(part[0]) && typeof part[0][0] === 'number') {
+            coords.push(...part);
+          } else {
+            part.forEach((subPart: any) => coords.push(...subPart));
+          }
+        });
+      } else if (geom.type === 'GeometryCollection') {
+        geom.geometries.forEach((g: any) => extractCoords(g));
+      }
+    };
+    
+    extractCoords(geometry);
+    return coords;
+  };
+
   const handleFeederClick = (feeder: Feeder) => {
     setSelectedFeeder(feeder.id);
-    if (feeder.coordinates && mapRef.current) {
-      mapRef.current.setView(feeder.coordinates, 15, {
+    if (feeder.bounds && mapRef.current) {
+      mapRef.current.fitBounds(feeder.bounds, {
+        padding: [50, 50],
         animate: true,
       });
     }
   };
+
+  const selectedFeederData = feeders.find(f => f.id === selectedFeeder);
 
   return (
     <div className="space-y-6 h-screen flex flex-col">
@@ -227,9 +293,10 @@ export default function Feeders() {
                     : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 }
               />
-              {kmlData && (
+              {selectedFeederData?.geoJson && (
                 <GeoJSON
-                  data={kmlData}
+                  key={selectedFeeder}
+                  data={selectedFeederData.geoJson}
                   pathOptions={{
                     color: "#2563eb",
                     weight: 3,
