@@ -99,44 +99,48 @@ export default function Feeders() {
         const kml = parser.parseFromString(kmlText, "text/xml");
         const geoJson = toGeoJSON.kml(kml);
         
-        // Extract feeders from KML features
-        const newFeeders: Feeder[] = [];
-        if (geoJson.features && Array.isArray(geoJson.features)) {
-          geoJson.features.forEach((feature: any, index: number) => {
-            const feederName = feature.properties?.name || `Feeder-${Date.now()}-${index}`;
-            const ea = feature.properties?.ea || feature.properties?.EA || "-";
-            const region = feature.properties?.region || feature.properties?.REGION || "-";
-            
-            // Calculate bounds for the feature
-            let bounds: [[number, number], [number, number]] | undefined;
+        // Create a single combined feeder from the entire KML file
+        if (geoJson.features && Array.isArray(geoJson.features) && geoJson.features.length > 0) {
+          const fileName = file.name.replace('.kml', '');
+          const firstFeature = geoJson.features[0];
+          const ea = firstFeature.properties?.ea || firstFeature.properties?.EA || "-";
+          const region = firstFeature.properties?.region || firstFeature.properties?.REGION || "-";
+          
+          // Calculate bounds for all features combined
+          let bounds: [[number, number], [number, number]] | undefined;
+          const allCoords: number[][] = [];
+          
+          geoJson.features.forEach((feature: any) => {
             if (feature.geometry) {
               const coords = getAllCoordinates(feature.geometry);
-              if (coords.length > 0) {
-                const lats = coords.map(c => c[1]);
-                const lngs = coords.map(c => c[0]);
-                bounds = [
-                  [Math.min(...lats), Math.min(...lngs)],
-                  [Math.max(...lats), Math.max(...lngs)]
-                ];
-              }
+              allCoords.push(...coords);
             }
-            
-            newFeeders.push({
-              id: `kml-${Date.now()}-${index}`,
-              feeder: feederName,
-              ea,
-              region,
-              geoJson: feature,
-              bounds
-            });
+          });
+          
+          if (allCoords.length > 0) {
+            const lats = allCoords.map(c => c[1]);
+            const lngs = allCoords.map(c => c[0]);
+            bounds = [
+              [Math.min(...lats), Math.min(...lngs)],
+              [Math.max(...lats), Math.max(...lngs)]
+            ];
+          }
+          
+          const newFeeder: Feeder = {
+            id: `kml-${Date.now()}`,
+            feeder: fileName,
+            ea,
+            region,
+            geoJson: geoJson, // Store the entire FeatureCollection
+            bounds
+          };
+          
+          setFeeders(prev => [...prev, newFeeder]);
+          toast({
+            title: "KML file loaded",
+            description: `Added "${fileName}" to feeders list.`,
           });
         }
-        
-        setFeeders(prev => [...prev, ...newFeeders]);
-        toast({
-          title: "KML file loaded",
-          description: `Added ${newFeeders.length} feeder(s) from KML file.`,
-        });
       } catch (error) {
         toast({
           title: "Error",
