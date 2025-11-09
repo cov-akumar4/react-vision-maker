@@ -247,7 +247,7 @@ export default function Feeders() {
 
           <Card className="flex-1 overflow-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-white z-10">
+              <TableHeader className="sticky top-0 bg-card z-10">
                 <TableRow>
                   <TableHead />
                   <TableHead>FEEDER</TableHead>
@@ -260,8 +260,8 @@ export default function Feeders() {
                   <TableRow
                     key={feeder.id}
                     onClick={() => handleFeederClick(feeder)}
-                    className={`cursor-pointer hover:bg-blue-50 ${
-                      selectedFeeder === feeder.id ? "bg-blue-100" : ""
+                    className={`cursor-pointer hover:bg-muted/50 ${
+                      selectedFeeder === feeder.id ? "bg-accent/20" : ""
                     }`}
                   >
                     <TableCell>
@@ -298,13 +298,15 @@ export default function Feeders() {
 
         {/* MAP */}
         <div className="col-span-9 relative h-full">
-          <Card className="h-full overflow-hidden border border-gray-300">
+          <Card className="h-full overflow-hidden">
             <MapContainer
-              center={[-23.5505, -46.6333]}
-              zoom={14}
-              scrollWheelZoom
-              zoomControl={false}
-              style={{ height: "100%", width: "100%" }}
+              {...({
+                center: [-23.5505, -46.6333],
+                zoom: 14,
+                scrollWheelZoom: true,
+                zoomControl: false,
+                style: { height: "100%", width: "100%" },
+              } as any)}
             >
               <MapController mapRef={mapRef} />
 
@@ -316,7 +318,7 @@ export default function Feeders() {
                     ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 }
-                attribution="© CARTO | © OpenStreetMap"
+                {...({ attribution: "© CARTO | © OpenStreetMap" } as any)}
               />
 
               {/* ✅ RENDER ONLY LINES */}
@@ -324,19 +326,21 @@ export default function Feeders() {
                 <GeoJSON
                   key={selectedFeeder}
                   data={selectedFeederData.geoJson}
-                  style={{
-                    color: "#0066ff",
-                    weight: 3,
-                    opacity: 0.9,
-                  }}
-                  pointToLayer={() => null} // ✅ Prevent markers for Point geometries
+                  {...({
+                    pathOptions: {
+                      color: "#ffc107",
+                      weight: 3,
+                      opacity: 0.9,
+                    },
+                    pointToLayer: () => null,
+                  } as any)}
                 />
               )}
             </MapContainer>
           </Card>
 
           {/* RIGHT PANEL */}
-          <div className="absolute top-4 right-4 bg-white/95 rounded-md shadow-md p-3 space-y-3 text-sm w-48 z-[1000]">
+          <div className="absolute top-4 right-4 bg-card/95 rounded-md shadow-md p-3 space-y-3 text-sm w-48 z-[1000] border">
             <div>
               <Label className="text-xs font-semibold">Map Type</Label>
               <RadioGroup value={mapType} onValueChange={setMapType}>
