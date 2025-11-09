@@ -181,10 +181,10 @@ export default function Feeders() {
             bounds,
           };
 
-          setFeeders((p) => [...p, newFeeder]);
+          setFeeders((p) => [newFeeder, ...p]);
           toast({
-            title: "KML Loaded",
-            description: `${fileName} added.`,
+            title: "Success",
+            description: "KML file uploaded successfully!",
           });
         }
       } catch (err) {
@@ -322,7 +322,7 @@ export default function Feeders() {
               />
 
               {/* ✅ RENDER ONLY LINES */}
-              {selectedFeederData?.geoJson && (
+              {selectedFeederData?.geoJson && selectedLayers.includes("condutores") && (
                 <GeoJSON
                   key={selectedFeeder}
                   data={selectedFeederData.geoJson}
