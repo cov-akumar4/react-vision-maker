@@ -227,15 +227,12 @@ export default function Feeders() {
           <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
             <Upload className="w-4 h-4 mr-2" /> Upload KML
           </Button>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" /> Add
-          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
         {/* LEFT */}
-        <div className="col-span-3 space-y-4 flex flex-col overflow-hidden">
+        <div className="col-span-3 space-y-4 flex flex-col overflow-hidden max-h-[calc(100vh-180px)]">
           <div>
             <Label className="text-sm mb-2 block">Search:</Label>
             <Input
@@ -297,7 +294,7 @@ export default function Feeders() {
         </div>
 
         {/* MAP */}
-        <div className="col-span-9 relative h-full">
+        <div className="col-span-9 relative h-full max-h-[calc(100vh-180px)]">
           <Card className="h-full overflow-hidden">
             <MapContainer
               {...({
@@ -328,7 +325,7 @@ export default function Feeders() {
                   data={selectedFeederData.geoJson}
                   {...({
                     pathOptions: {
-                      color: "#ffc107",
+                      color: "#0d6efd",
                       weight: 3,
                       opacity: 0.9,
                     },

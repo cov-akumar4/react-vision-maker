@@ -60,7 +60,6 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
                 { label: t('actions'), view: "system/actions", icon: Activity },
                 { label: t('methods'), view: "system/methods", icon: Wrench },
                 { label: t('feeders'), view: "system/feeders", icon: Plug },
-                { label: t('eas'), view: "system/eas", icon: Wifi },
                 { label: t('alarms'), view: "system/alarms", icon: Bell },
               ]
             },

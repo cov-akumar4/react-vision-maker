@@ -16,16 +16,13 @@ interface Car {
   model: string;
   year: number;
   licensePlate: string;
-  mviVersion: string;
-  spectromVersion: string;
-  neuralNetwork: string;
   lastUpdate: string;
 }
 
 const mockCars: Car[] = [
-  { idUnico: "CAR-001", name: "Inspection Vehicle 1", model: "Toyota Hilux", year: 2022, licensePlate: "ABC-1234", mviVersion: "v2.3.1", spectromVersion: "v1.8.2", neuralNetwork: "YOLOv5", lastUpdate: "11/04/2023 10:30:15" },
-  { idUnico: "CAR-002", name: "Inspection Vehicle 2", model: "Ford Ranger", year: 2021, licensePlate: "XYZ-5678", mviVersion: "v2.2.5", spectromVersion: "v1.7.9", neuralNetwork: "YOLOv4", lastUpdate: "11/05/2023 14:22:40" },
-  { idUnico: "CAR-003", name: "Inspection Vehicle 3", model: "Chevrolet S10", year: 2023, licensePlate: "DEF-9012", mviVersion: "v2.4.0", spectromVersion: "v1.9.1", neuralNetwork: "YOLOv5", lastUpdate: "11/06/2023 09:15:30" },
+  { idUnico: "CAR-001", name: "Inspection Vehicle 1", model: "Toyota Hilux", year: 2022, licensePlate: "ABC-1234", lastUpdate: "11/04/2023 10:30:15" },
+  { idUnico: "CAR-002", name: "Inspection Vehicle 2", model: "Ford Ranger", year: 2021, licensePlate: "XYZ-5678", lastUpdate: "11/05/2023 14:22:40" },
+  { idUnico: "CAR-003", name: "Inspection Vehicle 3", model: "Chevrolet S10", year: 2023, licensePlate: "DEF-9012", lastUpdate: "11/06/2023 09:15:30" },
 ];
 
 export default function Cars() {
@@ -43,10 +40,7 @@ export default function Cars() {
     name: "", 
     model: "", 
     year: new Date().getFullYear(), 
-    licensePlate: "", 
-    mviVersion: "", 
-    spectromVersion: "", 
-    neuralNetwork: "" 
+    licensePlate: ""
   });
 
   const handleSort = (field: keyof Car) => {
@@ -64,10 +58,7 @@ export default function Cars() {
       name: "", 
       model: "", 
       year: new Date().getFullYear(), 
-      licensePlate: "", 
-      mviVersion: "", 
-      spectromVersion: "", 
-      neuralNetwork: "" 
+      licensePlate: ""
     });
     setIsDialogOpen(true);
   };
@@ -78,10 +69,7 @@ export default function Cars() {
       name: car.name, 
       model: car.model, 
       year: car.year, 
-      licensePlate: car.licensePlate, 
-      mviVersion: car.mviVersion, 
-      spectromVersion: car.spectromVersion, 
-      neuralNetwork: car.neuralNetwork 
+      licensePlate: car.licensePlate
     });
     setIsDialogOpen(true);
   };
@@ -214,21 +202,6 @@ export default function Cars() {
                     LICENSE PLATE <ArrowUpDown className="w-4 h-4" />
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("mviVersion")}>
-                  <div className="flex items-center gap-1">
-                    MVI VERSION <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("spectromVersion")}>
-                  <div className="flex items-center gap-1">
-                    SPECTROM VERSION <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("neuralNetwork")}>
-                  <div className="flex items-center gap-1">
-                    NEURAL NETWORK <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
                 <TableHead className="cursor-pointer" onClick={() => handleSort("lastUpdate")}>
                   <div className="flex items-center gap-1">
                     LAST UPDATE <ArrowUpDown className="w-4 h-4" />
@@ -245,9 +218,6 @@ export default function Cars() {
                   <TableCell>{car.model}</TableCell>
                   <TableCell>{car.year}</TableCell>
                   <TableCell>{car.licensePlate}</TableCell>
-                  <TableCell>{car.mviVersion}</TableCell>
-                  <TableCell>{car.spectromVersion}</TableCell>
-                  <TableCell>{car.neuralNetwork}</TableCell>
                   <TableCell className="text-muted-foreground">{car.lastUpdate}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -345,33 +315,6 @@ export default function Cars() {
                   value={formData.licensePlate}
                   onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
                   placeholder="Enter license plate"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mviVersion">MVI Version</Label>
-                <Input
-                  id="mviVersion"
-                  value={formData.mviVersion}
-                  onChange={(e) => setFormData({ ...formData, mviVersion: e.target.value })}
-                  placeholder="Enter MVI version"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="spectromVersion">Spectrom Version</Label>
-                <Input
-                  id="spectromVersion"
-                  value={formData.spectromVersion}
-                  onChange={(e) => setFormData({ ...formData, spectromVersion: e.target.value })}
-                  placeholder="Enter Spectrom version"
-                />
-              </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="neuralNetwork">Neural Network</Label>
-                <Input
-                  id="neuralNetwork"
-                  value={formData.neuralNetwork}
-                  onChange={(e) => setFormData({ ...formData, neuralNetwork: e.target.value })}
-                  placeholder="Enter neural network"
                 />
               </div>
             </div>
