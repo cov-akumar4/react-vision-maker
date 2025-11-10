@@ -4,32 +4,33 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigate: (view: string) => void;
   onOpenProfile: () => void;
-  currentView: string;
 }
 
 interface MenuItem {
   icon: any;
   label: string;
-  view: string;
-  subItems?: { label: string; view: string; icon?: any }[];
+  path: string;
+  subItems?: { label: string; path: string; icon?: any }[];
 }
 
-export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentView }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onOpenProfile }: SidebarProps) {
   const { profile, signOut, isAdmin, isClient } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
-  const toggleMenu = (view: string) => {
+  const toggleMenu = (path: string) => {
     setExpandedMenus(prev =>
-      prev.includes(view)
-        ? prev.filter(v => v !== view)
-        : [...prev, view]
+      prev.includes(path)
+        ? prev.filter(v => v !== path)
+        : [...prev, path]
     );
   };
 
@@ -39,31 +40,31 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
         {
           title: t('main'),
           items: [
-            { icon: Home, label: t('dashboard'), view: "dashboard" },
+            { icon: Home, label: t('dashboard'), path: "/" },
             {
               icon: Upload,
               label: t('inspections'),
-              view: "inspections",
+              path: "inspections",
               subItems: [
-                { label: t('distribution'), view: "inspections/distribution", icon: Zap },
-                { label: t('transmission'), view: "inspections/transmission", icon: Radio },
+                { label: t('distribution'), path: "/distribution", icon: Zap },
+                { label: t('transmission'), path: "/transmission", icon: Radio },
               ]
             },
             {
               icon: Settings,
               label: t('system'),
-              view: "system",
+              path: "system",
               subItems: [
-                { label: t('elements'), view: "system/elements", icon: Box },
-                { label: t('lamps'), view: "system/lamps", icon: Lightbulb },
-                { label: t('cars'), view: "system/cars", icon: Car },
-                { label: t('actions'), view: "system/actions", icon: Activity },
-                { label: t('methods'), view: "system/methods", icon: Wrench },
-                { label: t('feeders'), view: "system/feeders", icon: Plug },
-                { label: t('alarms'), view: "system/alarms", icon: Bell },
+                { label: t('elements'), path: "/system/elements", icon: Box },
+                { label: t('lamps'), path: "/system/lamps", icon: Lightbulb },
+                { label: t('cars'), path: "/system/cars", icon: Car },
+                { label: t('actions'), path: "/system/actions", icon: Activity },
+                { label: t('methods'), path: "/system/methods", icon: Wrench },
+                { label: t('feeders'), path: "/feeders", icon: Plug },
+                { label: t('alarms'), path: "/system/alarms", icon: Bell },
               ]
             },
-            { icon: Users, label: t('clients'), view: "clients" },
+            { icon: Users, label: t('clients'), path: "/clients" },
           ],
         },
       ];
@@ -74,8 +75,8 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
         {
           title: t('main'),
           items: [
-            { icon: Home, label: t('dashboard'), view: "dashboard" },
-            { icon: Upload, label: t('inspections'), view: "inspections" },
+            { icon: Home, label: t('dashboard'), path: "/" },
+            { icon: Upload, label: t('inspections'), path: "/inspections" },
           ],
         },
       ];
@@ -136,8 +137,8 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
               <div className="space-y-1">
                 {section.items.map((item, itemIdx) => {
                   const Icon = item.icon;
-                  const isActive = currentView === item.view || currentView.startsWith(item.view + '/');
-                  const isExpanded = expandedMenus.includes(item.view);
+                  const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
+                  const isExpanded = expandedMenus.includes(item.path);
                   const hasSubItems = item.subItems && item.subItems.length > 0;
 
                   return (
@@ -146,9 +147,9 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
                         variant={isActive && !hasSubItems ? "default" : "ghost"}
                         onClick={() => {
                           if (hasSubItems) {
-                            toggleMenu(item.view);
+                            toggleMenu(item.path);
                           } else {
-                            onNavigate(item.view);
+                            navigate(item.path);
                             onClose();
                           }
                         }}
@@ -169,14 +170,14 @@ export function Sidebar({ isOpen, onClose, onNavigate, onOpenProfile, currentVie
                       {hasSubItems && isExpanded && (
                         <div className="ml-7 mt-1 space-y-1">
                           {item.subItems!.map((subItem, subIdx) => {
-                            const isSubActive = currentView === subItem.view;
+                            const isSubActive = location.pathname === subItem.path;
                             const SubIcon = subItem.icon;
                             return (
                               <Button
                                 key={subIdx}
                                 variant={isSubActive ? "default" : "ghost"}
                                 onClick={() => {
-                                  onNavigate(subItem.view);
+                                  navigate(subItem.path);
                                   onClose();
                                 }}
                                 className={`

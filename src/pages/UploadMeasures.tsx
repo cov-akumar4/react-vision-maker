@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { TopBar } from "@/components/dashboard/TopBar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ProfileModal } from "@/components/ProfileModal";
 
 interface UploadFile {
   id: string;
@@ -12,6 +17,9 @@ interface UploadFile {
 }
 
 export default function UploadMeasures() {
+  const { t } = useTranslation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -65,8 +73,20 @@ export default function UploadMeasures() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Tabs */}
+    <div className="flex min-h-screen w-full">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
+
+      <main className="flex-1 lg:ml-60 transition-all duration-300">
+        <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+          <DashboardHeader />
+
+          <div className="space-y-6">
       <Tabs defaultValue="vehicle" className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="vehicle">Vehicle Thermographic Measures / Traces</TabsTrigger>
@@ -178,6 +198,16 @@ export default function UploadMeasures() {
           </Button>
         </div>
       </Card>
+          </div>
+
+          <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <div>{t('copyright')}</div>
+            <div>{t('version')}</div>
+          </footer>
+        </div>
+      </main>
+
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }

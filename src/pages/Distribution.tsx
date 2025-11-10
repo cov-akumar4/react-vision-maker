@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -9,9 +10,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronDown, Download, RefreshCw, FileText, Upload, FolderOpen, Copy, Edit, Trash2, Bell, MapPin, Sparkles, RotateCcw } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, Download, RefreshCw, FileText, Upload as UploadIcon, FolderOpen, Copy, Edit, Trash2, Bell, MapPin, Sparkles, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { TopBar } from "@/components/dashboard/TopBar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ProfileModal } from "@/components/ProfileModal";
 
 interface DistributionRecord {
   id: string;
@@ -36,12 +41,11 @@ const dummyData: DistributionRecord[] = [
   { id: "8", name: "2025 EMT - RSI", ea: "RSI_088009_2014244", feeder: "FDR-007", status: "Finalizada", vehicle: "SW4", measures: { red: 7, yellow: 78 }, type: "Thermo-T", lastMeasure: "2025-10-23" },
 ];
 
-interface DistributionProps {
-  onNavigate?: (view: string) => void;
-}
-
-export default function Distribution({ onNavigate }: DistributionProps) {
+export default function Distribution() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({ from: new Date(2025, 7, 31), to: new Date(2025, 9, 30) });
   const [inspections, setInspections] = useState("");
   const [actions, setActions] = useState("");
@@ -83,11 +87,20 @@ export default function Distribution({ onNavigate }: DistributionProps) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-muted-foreground">
-        Home &gt; Inspections &gt; Distribution
-      </div>
+    <div className="flex min-h-screen w-full">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
+
+      <main className="flex-1 lg:ml-60 transition-all duration-300">
+        <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+          <DashboardHeader />
+
+          <div className="space-y-6">
 
       {/* Filter Section */}
       <Card className="p-6">
@@ -266,8 +279,8 @@ export default function Distribution({ onNavigate }: DistributionProps) {
                           <FileText className="mr-2 h-4 w-4" />
                           Inspection Report
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onNavigate?.("inspections/distribution/upload")}>
-                          <Upload className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => navigate("/upload")}>
+                          <UploadIcon className="mr-2 h-4 w-4" />
                           Upload
                         </DropdownMenuItem>
                         <DropdownMenuItem>
@@ -369,6 +382,16 @@ export default function Distribution({ onNavigate }: DistributionProps) {
           </div>
         </div>
       </Card>
+          </div>
+
+          <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <div>{t('copyright')}</div>
+            <div>{t('version')}</div>
+          </footer>
+        </div>
+      </main>
+
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }
