@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Filter, ArrowUpDown, Grid, RotateCcw, FileDown, FileType, Eye, ThermometerSun, Triangle, Camera } from "lucide-react";
+import { ChevronDown, Filter, ArrowUpDown, Grid, RotateCcw, FileDown, FileType, Eye, ThermometerSun, Triangle, Camera, BarChart3 } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ProfileModal } from "@/components/ProfileModal";
 import { Slider } from "@/components/ui/slider";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 // Mock data based on the screenshot
 const measureDetails = {
@@ -40,11 +42,35 @@ const actionsData = [
   { id: 3, element: "7294115", opNumbers: "-", temperature: "-", tAbs: "-", tDelta: "-", finalAction: "Action not Defined" },
 ];
 
+const chartData = [
+  { category: "Poles", feederElements: 600, inspectionMeasures: 552 },
+  { category: "Poste", feederElements: 0, inspectionMeasures: 0 },
+];
+
+const actionsChartData = [
+  { action: "Immediate Action", count: 3 },
+  { action: "Scheduled Action", count: 15 },
+  { action: "No Action", count: 306 },
+  { action: "Action not Defined", count: 552 },
+];
+
+const chartConfig = {
+  feederElements: {
+    label: "Feeder Elements",
+    color: "hsl(var(--chart-1))",
+  },
+  inspectionMeasures: {
+    label: "Inspection Measures",
+    color: "hsl(var(--chart-2))",
+  },
+};
+
 export default function MeasureImageDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [statisticsOpen, setStatisticsOpen] = useState(true);
   const [imagesOpen, setImagesOpen] = useState(true);
   const [informationOpen, setInformationOpen] = useState(true);
   const [actionsOpen, setActionsOpen] = useState(true);
@@ -133,6 +159,148 @@ export default function MeasureImageDetails() {
                 </Button>
               </div>
             </div>
+
+            {/* Statistics Section */}
+            <Collapsible open={statisticsOpen} onOpenChange={setStatisticsOpen}>
+              <Card>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
+                  <h3 className="text-lg font-semibold">Statistics</h3>
+                  {statisticsOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 rotate-180" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Left Panel - Charts */}
+                      <div className="lg:col-span-2 space-y-6">
+                        {/* Feeder Elements vs Inspection Measures Chart */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base font-semibold">Feeder Elements vs Inspection Measures</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ChartContainer config={chartConfig} className="h-[300px]">
+                              <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis 
+                                  dataKey="category" 
+                                  className="text-xs"
+                                  tick={{ fill: "hsl(var(--muted-foreground))" }}
+                                />
+                                <YAxis 
+                                  className="text-xs"
+                                  tick={{ fill: "hsl(var(--muted-foreground))" }}
+                                />
+                                <ChartTooltip content={<ChartTooltipContent />} />
+                                <Bar dataKey="feederElements" fill="var(--color-feederElements)" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="inspectionMeasures" fill="var(--color-inspectionMeasures)" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ChartContainer>
+                          </CardContent>
+                        </Card>
+
+                        {/* Actions Chart */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base font-semibold">Actions</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ChartContainer config={{
+                              count: { label: "Count", color: "hsl(var(--primary))" }
+                            }} className="h-[250px]">
+                              <BarChart data={actionsChartData} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis type="number" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                                <YAxis 
+                                  dataKey="action" 
+                                  type="category" 
+                                  width={140}
+                                  className="text-xs"
+                                  tick={{ fill: "hsl(var(--muted-foreground))" }}
+                                />
+                                <ChartTooltip content={<ChartTooltipContent />} />
+                                <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                                  {actionsChartData.map((entry, index) => (
+                                    <Bar 
+                                      key={`cell-${index}`} 
+                                      dataKey="count"
+                                      fill={
+                                        entry.action === "Immediate Action" ? "hsl(var(--destructive))" :
+                                        entry.action === "Scheduled Action" ? "hsl(30 100% 50%)" :
+                                        entry.action === "No Action" ? "hsl(160 60% 50%)" :
+                                        "hsl(var(--muted))"
+                                      }
+                                    />
+                                  ))}
+                                </Bar>
+                              </BarChart>
+                            </ChartContainer>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Right Panel - Statistics Cards */}
+                      <div className="space-y-6">
+                        {/* Inspection Statistics */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-semibold flex items-center gap-2">
+                              <BarChart3 className="w-4 h-4 text-primary" />
+                              Inspection Statistics
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div className="flex justify-between items-center py-2 border-b border-border/50">
+                              <span className="text-sm font-medium">Feeder Name</span>
+                              <span className="text-sm text-muted-foreground">RSL_279001_777249</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-border/50">
+                              <span className="text-sm font-medium">Feeder Length</span>
+                              <span className="text-sm text-muted-foreground">41.43 km</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-border/50">
+                              <span className="text-sm font-medium">Distance traveled</span>
+                              <span className="text-sm text-muted-foreground">20.97 km</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-border/50">
+                              <span className="text-sm font-medium">First measure</span>
+                              <span className="text-sm text-muted-foreground">30/09/2025 23:17:22</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-border/50">
+                              <span className="text-sm font-medium">Last measure</span>
+                              <span className="text-sm text-muted-foreground">01/10/2025 01:29:04</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-border/50">
+                              <span className="text-sm font-medium">Total measures</span>
+                              <span className="text-sm text-muted-foreground">891</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2">
+                              <span className="text-sm font-medium">Total time</span>
+                              <span className="text-sm text-muted-foreground">0d 1h 10min 5s</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Daily Statistics */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base font-semibold flex items-center gap-2">
+                              <BarChart3 className="w-4 h-4 text-primary" />
+                              Daily Statistics
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex justify-between items-center py-2">
+                              <span className="text-sm font-medium">30/09/2025</span>
+                              <span className="text-sm text-muted-foreground">20.97 km • 1h 10min 5s</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
 
             {/* Images Section */}
             <Collapsible open={imagesOpen} onOpenChange={setImagesOpen}>
