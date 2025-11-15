@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -9,6 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { TopBar } from "@/components/dashboard/TopBar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ProfileModal } from "@/components/ProfileModal";
 
 interface Element {
   id: string;
@@ -27,6 +32,9 @@ const mockElements: Element[] = [
 ];
 
 export default function Elements() {
+  const { t } = useTranslation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [elements, setElements] = useState<Element[]>(mockElements);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,200 +130,223 @@ export default function Elements() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Elements</h1>
-          <p className="text-muted-foreground">System Components Overview and Management</p>
-        </div>
-        <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Element
-        </Button>
-      </div>
+    <div className="flex min-h-screen w-full">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Show</span>
-            <Select value={String(entriesPerPage)} onValueChange={(val) => setEntriesPerPage(Number(val))}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">entries</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Search:</span>
-            <Input
-              className="w-64"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
+      <main className="flex-1 lg:ml-60 transition-all duration-300">
+        <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("id")}>
-                  <div className="flex items-center gap-1">
-                    ID <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("name")}>
-                  <div className="flex items-center gap-1">
-                    NAME <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("tag")}>
-                  <div className="flex items-center gap-1">
-                    TAG <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("index")}>
-                  <div className="flex items-center gap-1">
-                    INDEX <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer" onClick={() => handleSort("lastUpdate")}>
-                  <div className="flex items-center gap-1">
-                    LAST UPDATE <ArrowUpDown className="w-4 h-4" />
-                  </div>
-                </TableHead>
-                <TableHead>ACTIONS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedElements.map((element) => (
-                <TableRow key={element.id} className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="font-mono text-xs">{element.id}</TableCell>
-                  <TableCell className="font-medium">{element.name}</TableCell>
-                  <TableCell>{element.tag}</TableCell>
-                  <TableCell>{element.index}</TableCell>
-                  <TableCell className="text-muted-foreground">{element.lastUpdate}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleEdit(element)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" onClick={() => handleDelete(element.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+          <DashboardHeader />
 
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * entriesPerPage + 1} to {Math.min(currentPage * entriesPerPage, filteredElements.length)} of {filteredElements.length} entries
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
+          <div className="space-y-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">Elements</h1>
+                <p className="text-muted-foreground">System Components Overview and Management</p>
+              </div>
+              <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Element
               </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+            </div>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Show</span>
+                  <Select value={String(entriesPerPage)} onValueChange={(val) => setEntriesPerPage(Number(val))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">entries</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Search:</span>
+                  <Input
+                    className="w-64"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("id")}>
+                        <div className="flex items-center gap-1">
+                          ID <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("name")}>
+                        <div className="flex items-center gap-1">
+                          NAME <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("tag")}>
+                        <div className="flex items-center gap-1">
+                          TAG <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("index")}>
+                        <div className="flex items-center gap-1">
+                          INDEX <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("lastUpdate")}>
+                        <div className="flex items-center gap-1">
+                          LAST UPDATE <ArrowUpDown className="w-4 h-4" />
+                        </div>
+                      </TableHead>
+                      <TableHead>ACTIONS</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedElements.map((element) => (
+                      <TableRow key={element.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-mono text-xs">{element.id}</TableCell>
+                        <TableCell className="font-medium">{element.name}</TableCell>
+                        <TableCell>{element.tag}</TableCell>
+                        <TableCell>{element.index}</TableCell>
+                        <TableCell className="text-muted-foreground">{element.lastUpdate}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleEdit(element)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" onClick={() => handleDelete(element.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * entriesPerPage + 1} to {Math.min(currentPage * entriesPerPage, filteredElements.length)} of {filteredElements.length} entries
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{editingElement ? "Edit Element" : "Create New Element"}</DialogTitle>
+                  <DialogDescription>
+                    {editingElement ? "Update the element details below." : "Fill in the details for the new element."}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Enter element name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tag">Tag *</Label>
+                    <Input
+                      id="tag"
+                      value={formData.tag}
+                      onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                      placeholder="Enter element tag"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="index">Index</Label>
+                    <Input
+                      id="index"
+                      type="number"
+                      value={formData.index}
+                      onChange={(e) => setFormData({ ...formData, index: parseInt(e.target.value) || 0 })}
+                      placeholder="Enter index"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    {editingElement ? "Update" : "Create"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the element from the system.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
+
+          <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <div>{t('copyright')}</div>
+            <div>{t('version')}</div>
+          </footer>
         </div>
-      </Card>
+      </main>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingElement ? "Edit Element" : "Create New Element"}</DialogTitle>
-            <DialogDescription>
-              {editingElement ? "Update the element details below." : "Fill in the details for the new element."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter element name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tag">Tag *</Label>
-              <Input
-                id="tag"
-                value={formData.tag}
-                onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-                placeholder="Enter element tag"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="index">Index</Label>
-              <Input
-                id="index"
-                type="number"
-                value={formData.index}
-                onChange={(e) => setFormData({ ...formData, index: parseInt(e.target.value) || 0 })}
-                placeholder="Enter index"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              {editingElement ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the element from the system.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }

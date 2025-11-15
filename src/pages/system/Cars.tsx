@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -9,6 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { TopBar } from "@/components/dashboard/TopBar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ProfileModal } from "@/components/ProfileModal";
 
 interface Car {
   idUnico: string;
@@ -26,6 +31,9 @@ const mockCars: Car[] = [
 ];
 
 export default function Cars() {
+  const { t } = useTranslation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [cars, setCars] = useState<Car[]>(mockCars);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -136,9 +144,22 @@ export default function Cars() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold mb-2">Cars</h1>
+    <div className="flex min-h-screen w-full">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
+
+      <main className="flex-1 lg:ml-60 transition-all duration-300">
+        <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+          <DashboardHeader />
+
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold mb-2">Cars</h1>
         <Button onClick={handleCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus className="w-4 h-4 mr-2" />
           Add New Car
@@ -344,6 +365,16 @@ export default function Cars() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+          </div>
+
+          <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+            <div>{t('copyright')}</div>
+            <div>{t('version')}</div>
+          </footer>
+        </div>
+      </main>
+
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }

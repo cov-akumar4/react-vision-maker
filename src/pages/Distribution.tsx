@@ -257,7 +257,11 @@ export default function Distribution() {
                   <TableCell>{record.lastMeasure}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate(`/distribution/measures/${record.id}`)}
+                      >
                         Open
                       </Button>
                       <DropdownMenu>

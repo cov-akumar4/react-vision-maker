@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface SidebarProps {
@@ -25,6 +25,21 @@ export function Sidebar({ isOpen, onClose, onOpenProfile }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+  // Auto-expand parent menu based on current route
+  useEffect(() => {
+    const menuSections = getMenuSections();
+    menuSections.forEach(section => {
+      section.items.forEach(item => {
+        if (item.subItems) {
+          const isOnSubRoute = item.subItems.some(sub => location.pathname === sub.path);
+          if (isOnSubRoute && !expandedMenus.includes(item.path)) {
+            setExpandedMenus(prev => [...prev, item.path]);
+          }
+        }
+      });
+    });
+  }, [location.pathname]);
 
   const toggleMenu = (path: string) => {
     setExpandedMenus(prev =>
@@ -178,7 +193,10 @@ export function Sidebar({ isOpen, onClose, onOpenProfile }: SidebarProps) {
                                 variant={isSubActive ? "default" : "ghost"}
                                 onClick={() => {
                                   navigate(subItem.path);
-                                  onClose();
+                                  // Don't close sidebar on desktop, only on mobile
+                                  if (window.innerWidth < 1024) {
+                                    onClose();
+                                  }
                                 }}
                                 className={`
                                   w-full justify-start text-sm gap-2
