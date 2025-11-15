@@ -7,6 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronRight, ChevronDown, Home, BarChart3, Calendar, MapPin, ThermometerSun, Bell } from "lucide-react";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { TopBar } from "@/components/dashboard/TopBar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { ProfileModal } from "@/components/ProfileModal";
 
 const measureData = [
   { id: "b74d9f44-a2b4-4d93-89c7-bf9fdf83993", address: "Rua Samo Antonio Jardim Carolina 78890-000 Sorriso", date: "30/09/2025", time: "20:35:44", action: "", hotspot: "30.83", reprocessedAt: "-" },
@@ -24,6 +28,8 @@ const measureData = [
 export default function MeasureDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
   const [statisticsOpen, setStatisticsOpen] = useState(true);
@@ -46,23 +52,19 @@ export default function MeasureDetails() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-          <Home className="w-4 h-4" />
-        </Button>
-        <ChevronRight className="w-4 h-4" />
-        <button onClick={() => navigate("/inspections")} className="hover:text-foreground">
-          Inspections
-        </button>
-        <ChevronRight className="w-4 h-4" />
-        <button onClick={() => navigate("/distribution")} className="hover:text-foreground">
-          Distribution
-        </button>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-foreground font-medium">Measures</span>
-      </div>
+    <div className="min-h-screen flex w-full bg-background">
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
+      
+      <div className="flex-1 flex flex-col lg:ml-60 transition-all duration-300">
+        <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <DashboardHeader />
+        
+        <main className="flex-1 p-6 space-y-6 overflow-auto">{/* Main content */}
+          <div className="space-y-6">
 
       {/* Statistics Section */}
       <Collapsible open={statisticsOpen} onOpenChange={setStatisticsOpen}>
@@ -185,7 +187,7 @@ export default function MeasureDetails() {
                         <TableCell>{measure.hotspot}</TableCell>
                         <TableCell>{measure.reprocessedAt}</TableCell>
                         <TableCell className="text-right">
-                          <Button size="sm">Open</Button>
+                          <Button size="sm" onClick={() => navigate(`/measure-image/${measure.id}`)}>Open</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -243,6 +245,17 @@ export default function MeasureDetails() {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+          </div>
+        </main>
+
+        <footer className="border-t bg-background py-4 px-6">
+          <p className="text-sm text-muted-foreground text-center">
+            © {new Date().getFullYear()} MVI. All rights reserved.
+          </p>
+        </footer>
+      </div>
+
+      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }
