@@ -22,6 +22,7 @@ import Actions from "./pages/system/Actions";
 import Methods from "./pages/system/Methods";
 import Alarms from "./pages/system/Alarms";
 import MeasureDetails from "./pages/MeasureDetails";
+import MeasureImageDetails from "./pages/MeasureImageDetails";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/distribution" element={<ProtectedRoute><Distribution /></ProtectedRoute>} />
             <Route path="/distribution/measures/:id" element={<ProtectedRoute><MeasureDetails /></ProtectedRoute>} />
+            <Route path="/measure-image/:id" element={<ProtectedRoute><MeasureImageDetails /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute><UploadMeasures /></ProtectedRoute>} />
             <Route path="/feeders" element={<ProtectedRoute><Feeders /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><AdminClients /></ProtectedRoute>} />
