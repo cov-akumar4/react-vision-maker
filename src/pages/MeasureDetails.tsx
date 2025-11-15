@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,8 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ProfileModal } from "@/components/ProfileModal";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const measureData = [
   { id: "b74d9f44-a2b4-4d93-89c7-bf9fdf83993", address: "Rua Samo Antonio Jardim Carolina 78890-000 Sorriso", date: "30/09/2025", time: "20:35:44", action: "", hotspot: "30.83", reprocessedAt: "-" },
@@ -25,9 +28,33 @@ const measureData = [
   { id: "0a6266ac-33c8-4e8d-b296-2ccc80c76759", address: "Rua Euclides da Cunha Pinheiros 78891-138 Sorriso", date: "30/09/2025", time: "20:58:28", action: "Scheduled Action", hotspot: "41.29", reprocessedAt: "-" },
 ];
 
+const chartData = [
+  { category: "Poles", feederElements: 600, inspectionMeasures: 552 },
+  { category: "Poste", feederElements: 0, inspectionMeasures: 0 },
+];
+
+const actionsChartData = [
+  { action: "Immediate Action", count: 3 },
+  { action: "Scheduled Action", count: 15 },
+  { action: "No Action", count: 306 },
+  { action: "Action not Defined", count: 552 },
+];
+
+const chartConfig = {
+  feederElements: {
+    label: "Feeder Elements",
+    color: "hsl(var(--chart-1))",
+  },
+  inspectionMeasures: {
+    label: "Inspection Measures",
+    color: "hsl(var(--chart-2))",
+  },
+};
+
 export default function MeasureDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState("10");
@@ -44,9 +71,9 @@ export default function MeasureDetails() {
 
   const getActionBadge = (action: string) => {
     if (action === "Immediate Action") {
-      return <Badge className="bg-destructive hover:bg-destructive/90 text-white">{action}</Badge>;
+      return <Badge className="bg-destructive hover:bg-destructive/90 text-white">{t('immediateAction')}</Badge>;
     } else if (action === "Scheduled Action") {
-      return <Badge className="bg-orange-500 hover:bg-orange-600 text-white">{action}</Badge>;
+      return <Badge className="bg-orange-500 hover:bg-orange-600 text-white">{t('scheduledAction')}</Badge>;
     }
     return null;
   };
@@ -61,9 +88,19 @@ export default function MeasureDetails() {
       
       <div className="flex-1 flex flex-col lg:ml-60 transition-all duration-300">
         <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <DashboardHeader />
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+          <DashboardHeader 
+            breadcrumbs={[
+              { label: t('home'), path: "/" },
+              { label: t('inspections'), path: "/distribution" },
+              { label: t('distribution'), path: "/distribution" }
+            ]}
+            title={t('dashboardTitle')}
+            subtitle={t('dashboardSubtitle')}
+          />
+        </div>
         
-        <main className="flex-1 p-6 space-y-6 overflow-auto">{/* Main content */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 pb-6 space-y-6 overflow-auto max-w-[1600px] mx-auto w-full">{/* Main content */}
           <div className="space-y-6">
 
       {/* Statistics Section */}
@@ -73,54 +110,139 @@ export default function MeasureDetails() {
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-70">
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                Statistics
+                {t('statistics')}
               </CardTitle>
               {statisticsOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </CollapsibleTrigger>
           </CardHeader>
           <CollapsibleContent>
-            <CardContent>
+            <CardContent className="p-4">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 h-[300px] bg-muted rounded flex items-center justify-center">
-                  Chart Placeholder
+                {/* Left Panel - Charts */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Feeder Elements vs Inspection Measures Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold">{t('feederElementsVsInspectionMeasures')}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={chartConfig} className="h-[300px]">
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis 
+                            dataKey="category" 
+                            className="text-xs"
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                          />
+                          <YAxis 
+                            className="text-xs"
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                          />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="feederElements" fill="var(--color-feederElements)" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="inspectionMeasures" fill="var(--color-inspectionMeasures)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Actions Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold">{t('actions')}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{
+                        count: { label: t('count'), color: "hsl(var(--primary))" }
+                      }} className="h-[250px]">
+                        <BarChart data={actionsChartData} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis type="number" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                          <YAxis 
+                            dataKey="action" 
+                            type="category" 
+                            width={140}
+                            className="text-xs"
+                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                          />
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                          <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                            {actionsChartData.map((entry, index) => (
+                              <Bar 
+                                key={`cell-${index}`} 
+                                dataKey="count"
+                                fill={
+                                  entry.action === "Immediate Action" ? "hsl(var(--destructive))" :
+                                  entry.action === "Scheduled Action" ? "hsl(30 100% 50%)" :
+                                  entry.action === "No Action" ? "hsl(160 60% 50%)" :
+                                  "hsl(var(--muted))"
+                                }
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-sm text-primary mb-3 flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4" />
-                      Inspection Statistics
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Feeder Name</span>
-                        <span className="font-medium">RSL088009_2014237</span>
+
+                {/* Right Panel - Statistics Cards */}
+                <div className="space-y-6">
+                  {/* Inspection Statistics */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-primary" />
+                        {t('inspectionStatistics')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm font-medium">{t('feederName')}</span>
+                        <span className="text-sm text-muted-foreground">RSL_279001_777249</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Feeder Length</span>
-                        <span className="font-medium">71.59 km</span>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm font-medium">{t('feederLength')}</span>
+                        <span className="text-sm text-muted-foreground">41.43 km</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total measures</span>
-                        <span className="font-medium">587</span>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm font-medium">{t('distanceTraveled')}</span>
+                        <span className="text-sm text-muted-foreground">20.97 km</span>
                       </div>
-                    </div>
-                  </div>
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-semibold text-sm text-primary mb-3 flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Daily Statistics
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="pb-2 border-b">
-                        <div className="font-medium">29/09/2025</div>
-                        <div className="text-muted-foreground">9.66 km • 0h 33min 7s</div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm font-medium">{t('firstMeasure')}</span>
+                        <span className="text-sm text-muted-foreground">30/09/2025 23:17:22</span>
                       </div>
-                      <div>
-                        <div className="font-medium">30/09/2025</div>
-                        <div className="text-muted-foreground">16.53 km • 0h 57min 32s</div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm font-medium">{t('lastMeasure')}</span>
+                        <span className="text-sm text-muted-foreground">01/10/2025 01:29:04</span>
                       </div>
-                    </div>
-                  </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm font-medium">{t('totalMeasures')}</span>
+                        <span className="text-sm text-muted-foreground">891</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-sm font-medium">{t('totalTime')}</span>
+                        <span className="text-sm text-muted-foreground">0d 1h 10min 5s</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Daily Statistics */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-primary" />
+                        {t('dailyStatistics')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-sm font-medium">30/09/2025</span>
+                        <span className="text-sm text-muted-foreground">20.97 km • 1h 10min 5s</span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </CardContent>
@@ -135,7 +257,7 @@ export default function MeasureDetails() {
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-70">
               <CardTitle className="flex items-center gap-2">
                 <ThermometerSun className="w-5 h-5 text-primary" />
-                Measures - Car - Thermographic
+                {t('measuresCarThermographic')}
               </CardTitle>
               {measuresOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </CollapsibleTrigger>
@@ -144,7 +266,7 @@ export default function MeasureDetails() {
             <CardContent>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">Show</span>
+                  <span className="text-sm">{t('show')}</span>
                   <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
                     <SelectTrigger className="w-20">
                       <SelectValue />
@@ -155,7 +277,7 @@ export default function MeasureDetails() {
                       <SelectItem value="50">50</SelectItem>
                     </SelectContent>
                   </Select>
-                  <span className="text-sm">entries</span>
+                  <span className="text-sm">{t('entries')}</span>
                 </div>
               </div>
 
@@ -163,13 +285,13 @@ export default function MeasureDetails() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>ADDRESS</TableHead>
-                      <TableHead>DATE</TableHead>
-                      <TableHead>ACTION</TableHead>
-                      <TableHead>HOTSPOT</TableHead>
-                      <TableHead>REPROCESSED AT</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t('id')}</TableHead>
+                      <TableHead>{t('address')}</TableHead>
+                      <TableHead>{t('dateLabel')}</TableHead>
+                      <TableHead>{t('actionLabel')}</TableHead>
+                      <TableHead>{t('hotspot')}</TableHead>
+                      <TableHead>{t('reprocessedAt')}</TableHead>
+                      <TableHead className="text-right">{t('actionColumn')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -187,7 +309,7 @@ export default function MeasureDetails() {
                         <TableCell>{measure.hotspot}</TableCell>
                         <TableCell>{measure.reprocessedAt}</TableCell>
                         <TableCell className="text-right">
-                          <Button size="sm" onClick={() => navigate(`/measure-image/${measure.id}`)}>Open</Button>
+                          <Button size="sm" onClick={() => navigate(`/measure-image/${measure.id}`)}>{t('open')}</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -197,12 +319,12 @@ export default function MeasureDetails() {
 
               <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * parseInt(entriesPerPage) + 1} to{" "}
-                  {Math.min(currentPage * parseInt(entriesPerPage), measureData.length)} of {measureData.length} entries
+                  {t('showing')} {(currentPage - 1) * parseInt(entriesPerPage) + 1} {t('to')}{" "}
+                  {Math.min(currentPage * parseInt(entriesPerPage), measureData.length)} {t('of')} {measureData.length} {t('entries')}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
-                    Previous
+                    {t('previous')}
                   </Button>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((page) => (
                     <Button
@@ -215,7 +337,7 @@ export default function MeasureDetails() {
                     </Button>
                   ))}
                   <Button variant="outline" size="sm" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
-                    Next
+                    {t('next')}
                   </Button>
                 </div>
               </div>
@@ -231,7 +353,7 @@ export default function MeasureDetails() {
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-70">
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
-                Map
+                {t('map')}
               </CardTitle>
               {mapOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </CollapsibleTrigger>
@@ -239,7 +361,7 @@ export default function MeasureDetails() {
           <CollapsibleContent>
             <CardContent>
               <div className="h-[500px] rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                <p className="text-muted-foreground">Map visualization placeholder</p>
+                <p className="text-muted-foreground">{t('mapVisualizationPlaceholder')}</p>
               </div>
             </CardContent>
           </CollapsibleContent>
@@ -250,7 +372,7 @@ export default function MeasureDetails() {
 
         <footer className="border-t bg-background py-4 px-6">
           <p className="text-sm text-muted-foreground text-center">
-            © {new Date().getFullYear()} MVI. All rights reserved.
+            © {new Date().getFullYear()} MVI. {t('allRightsReserved')}
           </p>
         </footer>
       </div>

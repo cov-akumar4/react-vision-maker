@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,18 +69,18 @@ const chartConfig = {
 export default function MeasureImageDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [statisticsOpen, setStatisticsOpen] = useState(true);
   const [imagesOpen, setImagesOpen] = useState(true);
   const [informationOpen, setInformationOpen] = useState(true);
   const [actionsOpen, setActionsOpen] = useState(true);
 
   const getActionBadge = (action: string) => {
     if (action === "Immediate Action") {
-      return <Badge className="bg-destructive hover:bg-destructive/90 text-white">{action}</Badge>;
+      return <Badge className="bg-destructive hover:bg-destructive/90 text-white">{t('immediateAction')}</Badge>;
     } else if (action === "Scheduled Action") {
-      return <Badge className="bg-orange-500 hover:bg-orange-600 text-white">{action}</Badge>;
+      return <Badge className="bg-orange-500 hover:bg-orange-600 text-white">{t('scheduledAction')}</Badge>;
     }
     return null;
   };
@@ -94,41 +95,51 @@ export default function MeasureImageDetails() {
       
       <div className="flex-1 flex flex-col lg:ml-60 transition-all duration-300">
         <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <DashboardHeader />
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+          <DashboardHeader 
+            breadcrumbs={[
+              { label: t('home'), path: "/" },
+              { label: t('inspections'), path: "/distribution" },
+              { label: t('distribution'), path: "/distribution" }
+            ]}
+            title={t('dashboardTitle')}
+            subtitle={t('dashboardSubtitle')}
+          />
+        </div>
         
         <main className="flex-1 overflow-auto">
-          <div className="p-6 space-y-4">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-4">
             {/* Top Action Bar */}
             <div className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm">
                   <Filter className="w-4 h-4 mr-2" />
-                  Filter
+                  {t('filter')}
                 </Button>
                 <Button variant="outline" size="sm">
                   <ArrowUpDown className="w-4 h-4 mr-2" />
-                  Sort
+                  {t('sort')}
                 </Button>
                 <Button variant="outline" size="sm">
                   <Grid className="w-4 h-4" />
                 </Button>
                 <Button variant="outline" size="sm">
                   <RotateCcw className="w-4 h-4 mr-2" />
-                  Return to Inspection Measures
+                  {t('returnToInspectionMeasures')}
                 </Button>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm">
                   <FileDown className="w-4 h-4 mr-2" />
-                  PDF
+                  {t('pdf')}
                 </Button>
                 <Button variant="outline" size="sm">
                   <FileType className="w-4 h-4 mr-2" />
-                  TIFF
+                  {t('tiff')}
                 </Button>
                 <Button variant="outline" size="sm">
                   <Eye className="w-4 h-4 mr-2" />
-                  Optical
+                  {t('optical')}
                 </Button>
               </div>
             </div>
@@ -149,7 +160,7 @@ export default function MeasureImageDetails() {
                   </div>
                   <div className="flex items-center gap-2">
                     <ThermometerSun className="w-4 h-4 text-destructive" />
-                    <span className="font-semibold">Max: {measureDetails.maxTemp}</span>
+                    <span className="font-semibold">{t('max')}: {measureDetails.maxTemp}</span>
                     <Triangle className="w-4 h-4 text-orange-500 fill-orange-500" />
                   </div>
                   {getActionBadge(measureDetails.action)}
@@ -160,153 +171,11 @@ export default function MeasureImageDetails() {
               </div>
             </div>
 
-            {/* Statistics Section */}
-            <Collapsible open={statisticsOpen} onOpenChange={setStatisticsOpen}>
-              <Card>
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
-                  <h3 className="text-lg font-semibold">Statistics</h3>
-                  {statisticsOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 rotate-180" />}
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Left Panel - Charts */}
-                      <div className="lg:col-span-2 space-y-6">
-                        {/* Feeder Elements vs Inspection Measures Chart */}
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-base font-semibold">Feeder Elements vs Inspection Measures</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <ChartContainer config={chartConfig} className="h-[300px]">
-                              <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                <XAxis 
-                                  dataKey="category" 
-                                  className="text-xs"
-                                  tick={{ fill: "hsl(var(--muted-foreground))" }}
-                                />
-                                <YAxis 
-                                  className="text-xs"
-                                  tick={{ fill: "hsl(var(--muted-foreground))" }}
-                                />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <Bar dataKey="feederElements" fill="var(--color-feederElements)" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="inspectionMeasures" fill="var(--color-inspectionMeasures)" radius={[4, 4, 0, 0]} />
-                              </BarChart>
-                            </ChartContainer>
-                          </CardContent>
-                        </Card>
-
-                        {/* Actions Chart */}
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-base font-semibold">Actions</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <ChartContainer config={{
-                              count: { label: "Count", color: "hsl(var(--primary))" }
-                            }} className="h-[250px]">
-                              <BarChart data={actionsChartData} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                                <XAxis type="number" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                                <YAxis 
-                                  dataKey="action" 
-                                  type="category" 
-                                  width={140}
-                                  className="text-xs"
-                                  tick={{ fill: "hsl(var(--muted-foreground))" }}
-                                />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                                  {actionsChartData.map((entry, index) => (
-                                    <Bar 
-                                      key={`cell-${index}`} 
-                                      dataKey="count"
-                                      fill={
-                                        entry.action === "Immediate Action" ? "hsl(var(--destructive))" :
-                                        entry.action === "Scheduled Action" ? "hsl(30 100% 50%)" :
-                                        entry.action === "No Action" ? "hsl(160 60% 50%)" :
-                                        "hsl(var(--muted))"
-                                      }
-                                    />
-                                  ))}
-                                </Bar>
-                              </BarChart>
-                            </ChartContainer>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      {/* Right Panel - Statistics Cards */}
-                      <div className="space-y-6">
-                        {/* Inspection Statistics */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-base font-semibold flex items-center gap-2">
-                              <BarChart3 className="w-4 h-4 text-primary" />
-                              Inspection Statistics
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <div className="flex justify-between items-center py-2 border-b border-border/50">
-                              <span className="text-sm font-medium">Feeder Name</span>
-                              <span className="text-sm text-muted-foreground">RSL_279001_777249</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-border/50">
-                              <span className="text-sm font-medium">Feeder Length</span>
-                              <span className="text-sm text-muted-foreground">41.43 km</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-border/50">
-                              <span className="text-sm font-medium">Distance traveled</span>
-                              <span className="text-sm text-muted-foreground">20.97 km</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-border/50">
-                              <span className="text-sm font-medium">First measure</span>
-                              <span className="text-sm text-muted-foreground">30/09/2025 23:17:22</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-border/50">
-                              <span className="text-sm font-medium">Last measure</span>
-                              <span className="text-sm text-muted-foreground">01/10/2025 01:29:04</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2 border-b border-border/50">
-                              <span className="text-sm font-medium">Total measures</span>
-                              <span className="text-sm text-muted-foreground">891</span>
-                            </div>
-                            <div className="flex justify-between items-center py-2">
-                              <span className="text-sm font-medium">Total time</span>
-                              <span className="text-sm text-muted-foreground">0d 1h 10min 5s</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Daily Statistics */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-base font-semibold flex items-center gap-2">
-                              <BarChart3 className="w-4 h-4 text-primary" />
-                              Daily Statistics
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex justify-between items-center py-2">
-                              <span className="text-sm font-medium">30/09/2025</span>
-                              <span className="text-sm text-muted-foreground">20.97 km • 1h 10min 5s</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
             {/* Images Section */}
             <Collapsible open={imagesOpen} onOpenChange={setImagesOpen}>
               <Card>
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
-                  <h3 className="text-lg font-semibold">Images</h3>
+                  <h3 className="text-lg font-semibold">{t('images')}</h3>
                   {imagesOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 rotate-180" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -314,6 +183,7 @@ export default function MeasureImageDetails() {
                     <div className="grid grid-cols-2 gap-4">
                       {/* Thermal Image */}
                       <div className="space-y-2">
+                        <div className="text-sm font-medium text-center">{t('thermalImage')}</div>
                         <div className="relative aspect-[4/3] bg-gradient-to-br from-yellow-300 via-orange-500 to-purple-900 rounded-lg overflow-hidden border">
                           {/* Temperature scale */}
                           <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
@@ -368,6 +238,7 @@ export default function MeasureImageDetails() {
 
                       {/* Optical Image */}
                       <div className="space-y-2">
+                        <div className="text-sm font-medium text-center">{t('opticalImage')}</div>
                         <div className="relative aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden border">
                           {/* Simulated night photo with power lines */}
                           <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-700">
@@ -403,7 +274,7 @@ export default function MeasureImageDetails() {
             <Collapsible open={informationOpen} onOpenChange={setInformationOpen}>
               <Card>
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
-                  <h3 className="text-lg font-semibold">Information</h3>
+                  <h3 className="text-lg font-semibold">{t('information')}</h3>
                   {informationOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 rotate-180" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -412,19 +283,19 @@ export default function MeasureImageDetails() {
                       {/* Column 1 */}
                       <div className="space-y-3">
                         <div>
-                          <div className="text-sm font-semibold mb-1">Address</div>
+                          <div className="text-sm font-semibold mb-1">{t('address')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.address}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Date</div>
+                          <div className="text-sm font-semibold mb-1">{t('dateLabel')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.date} {measureDetails.time}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Detected Feeders</div>
+                          <div className="text-sm font-semibold mb-1">{t('detectedFeeders')}</div>
                           <div className="text-sm text-muted-foreground">-</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Observations</div>
+                          <div className="text-sm font-semibold mb-1">{t('observations')}</div>
                           <div className="text-sm text-muted-foreground h-20 border rounded p-2 bg-muted/20"></div>
                         </div>
                       </div>
@@ -432,11 +303,11 @@ export default function MeasureImageDetails() {
                       {/* Column 2 */}
                       <div className="space-y-3">
                         <div>
-                          <div className="text-sm font-semibold mb-1">Camera</div>
+                          <div className="text-sm font-semibold mb-1">{t('camera')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.camera}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Relative Humidity</div>
+                          <div className="text-sm font-semibold mb-1">{t('relativeHumidity')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.relativeHumidity}</div>
                         </div>
                       </div>
@@ -444,15 +315,15 @@ export default function MeasureImageDetails() {
                       {/* Column 3 */}
                       <div className="space-y-3">
                         <div>
-                          <div className="text-sm font-semibold mb-1">Inference</div>
+                          <div className="text-sm font-semibold mb-1">{t('inference')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.inference}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Wind</div>
+                          <div className="text-sm font-semibold mb-1">{t('wind')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.wind}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Inspection Name</div>
+                          <div className="text-sm font-semibold mb-1">{t('inspectionName')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.inspectionName}</div>
                         </div>
                       </div>
@@ -460,7 +331,7 @@ export default function MeasureImageDetails() {
                       {/* Column 4 */}
                       <div className="space-y-3">
                         <div>
-                          <div className="text-sm font-semibold mb-1">Coordinates</div>
+                          <div className="text-sm font-semibold mb-1">{t('coordinates')}</div>
                           <div className="text-sm text-muted-foreground flex items-center gap-1">
                             {measureDetails.coordinates}
                             <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-primary">
@@ -469,19 +340,19 @@ export default function MeasureImageDetails() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Temperature</div>
+                          <div className="text-sm font-semibold mb-1">{t('temperature')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.temperature}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Speed</div>
+                          <div className="text-sm font-semibold mb-1">{t('speed')}</div>
                           <div className="text-sm text-muted-foreground">{measureDetails.speed}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Inspection Feeder</div>
+                          <div className="text-sm font-semibold mb-1">{t('inspectionFeeder')}</div>
                           <div className="text-sm text-primary">{measureDetails.inspectionFeeder}</div>
                         </div>
                         <div>
-                          <div className="text-sm font-semibold mb-1">Load</div>
+                          <div className="text-sm font-semibold mb-1">{t('load')}</div>
                           <div className="flex items-center gap-2">
                             <Slider value={[measureDetails.load]} max={100} className="flex-1" />
                             <span className="text-sm font-medium">{measureDetails.load}%</span>
@@ -498,7 +369,7 @@ export default function MeasureImageDetails() {
             <Collapsible open={actionsOpen} onOpenChange={setActionsOpen}>
               <Card>
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
-                  <h3 className="text-lg font-semibold">Actions</h3>
+                  <h3 className="text-lg font-semibold">{t('actionDetails')}</h3>
                   {actionsOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronDown className="w-5 h-5 rotate-180" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -507,13 +378,13 @@ export default function MeasureImageDetails() {
                       <table className="w-full">
                         <thead>
                           <tr className="border-b">
-                            <th className="text-left py-3 px-4 text-sm font-semibold">ELEMENT</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">OP. NUMBERS</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">ID</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">TEMPERATURE</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">T. ABS (°C)</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">T. DELTA (°C)</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">FINAL ACTION</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('element')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('opNumbers')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('id')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('temperature')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('tAbs')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('tDelta')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">{t('finalAction')}</th>
                           </tr>
                         </thead>
                         <tbody>

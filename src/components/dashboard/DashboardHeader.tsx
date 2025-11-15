@@ -2,12 +2,18 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  breadcrumbs?: Array<{ label: string; path?: string }>;
+  title?: string;
+  subtitle?: string;
+}
+
+export function DashboardHeader({ breadcrumbs: customBreadcrumbs, title: customTitle, subtitle: customSubtitle }: DashboardHeaderProps = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getBreadcrumbs = () => {
+  const getDefaultBreadcrumbs = () => {
     const pathname = location.pathname;
     const breadcrumbs = [{ label: t('home'), path: '/' }];
 
@@ -36,12 +42,15 @@ export function DashboardHeader() {
       breadcrumbs.push({ label: t('inspections'), path: '/inspections' });
     } else if (pathname === '/profile') {
       breadcrumbs.push({ label: t('profile'), path: '/profile' });
+    } else if (pathname.includes('/measure-details') || pathname.includes('/measure-image')) {
+      breadcrumbs.push({ label: t('inspections'), path: '/distribution' });
+      breadcrumbs.push({ label: t('distribution'), path: '/distribution' });
     }
 
     return breadcrumbs;
   };
 
-  const breadcrumbs = getBreadcrumbs();
+  const breadcrumbs = customBreadcrumbs || getDefaultBreadcrumbs();
 
   return (
     <div className="mb-6">
@@ -62,9 +71,9 @@ export function DashboardHeader() {
           </div>
         ))}
       </div>
-      <h1 className="text-3xl font-bold mb-2">{t('dashboardTitle')}</h1>
+      <h1 className="text-3xl font-bold mb-2">{customTitle || t('dashboardTitle')}</h1>
       <p className="text-muted-foreground">
-        {t('dashboardSubtitle')}
+        {customSubtitle || t('dashboardSubtitle')}
       </p>
     </div>
   );
