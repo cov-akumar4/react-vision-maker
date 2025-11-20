@@ -117,15 +117,15 @@ export default function MeasureDetails() {
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="p-4">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Panel - Charts */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Feeder Elements vs Inspection Measures Chart */}
-                  <Card>
-                    <CardHeader>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Charts Row - 65% and 35% width */}
+                <div className="lg:col-span-4 grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
+                  {/* Feeder Elements vs Inspection Measures Chart - 65% */}
+                  <Card className="flex flex-col">
+                    <CardHeader className="pb-3">
                       <CardTitle className="text-base font-semibold">{t('feederElementsVsInspectionMeasures')}</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-1">
                       <ChartContainer config={chartConfig} className="h-[300px]">
                         <BarChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -146,27 +146,29 @@ export default function MeasureDetails() {
                     </CardContent>
                   </Card>
 
-                  {/* Actions Chart */}
-                  <Card>
-                    <CardHeader>
+                  {/* Actions Chart - 35% */}
+                  <Card className="flex flex-col overflow-hidden">
+                    <CardHeader className="pb-2">
                       <CardTitle className="text-base font-semibold">{t('actions')}</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex-1 p-1 overflow-hidden">
                       <ChartContainer config={{
                         count: { label: t('count'), color: "hsl(var(--primary))" }
-                      }} className="h-[250px]">
-                        <BarChart data={actionsChartData} layout="vertical">
+                      }} className="h-[300px] w-full">
+                        <BarChart data={actionsChartData} margin={{ top: 0, right: 0, left: 0, bottom: 60 }}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis type="number" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                          <YAxis 
+                          <XAxis 
                             dataKey="action" 
-                            type="category" 
-                            width={140}
+                            angle={-35}
+                            textAnchor="end"
+                            height={60}
+                            interval={0}
                             className="text-xs"
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
+                            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
                           />
+                          <YAxis width={35} className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
                           <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                             {actionsChartData.map((entry, index) => (
                               <Bar 
                                 key={`cell-${index}`} 
@@ -186,8 +188,8 @@ export default function MeasureDetails() {
                   </Card>
                 </div>
 
-                {/* Right Panel - Statistics Cards */}
-                <div className="space-y-6">
+                {/* Right Panel - Statistics Cards - 35% */}
+                <div className="lg:col-span-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Inspection Statistics */}
                   <Card>
                     <CardHeader className="pb-3">

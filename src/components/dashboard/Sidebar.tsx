@@ -61,8 +61,7 @@ export function Sidebar({ isOpen, onClose, onOpenProfile }: SidebarProps) {
               label: t('inspections'),
               path: "inspections",
               subItems: [
-                { label: t('distribution'), path: "/distribution", icon: Zap },
-                { label: t('transmission'), path: "/transmission", icon: Radio },
+                { label: t('distribution'), path: "/distribution", icon: Zap }
               ]
             },
             {
