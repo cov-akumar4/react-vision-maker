@@ -10,6 +10,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Calendar as CalendarIcon, ChevronDown, Download, RefreshCw, FileText, Upload as UploadIcon, FolderOpen, Copy, Edit, Trash2, Bell, MapPin, Sparkles, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ProfileModal } from "@/components/ProfileModal";
+import { InfiniteScrollCarSelect } from "@/components/InfiniteScrollCarSelect";
 
 interface DistributionRecord {
   id: string;
@@ -46,6 +49,7 @@ export default function Distribution() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
     const today = new Date();
     const sixtyDaysAgo = new Date();
@@ -60,6 +64,12 @@ export default function Distribution() {
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    feeder: "",
+    car: ""
+  });
 
   const filteredData = dummyData.filter((record) =>
     Object.values(record).some((value) =>
@@ -80,6 +90,13 @@ export default function Distribution() {
     setCars("");
     setFeeders("");
     setSearchTerm("");
+  };
+
+  const handleAddInspection = () => {
+    // TODO: Add API call to create inspection
+    console.log("Adding inspection:", formData);
+    setIsAddModalOpen(false);
+    setFormData({ name: "", feeder: "", car: "" });
   };
 
   const getStatusColor = (status: string) => {
@@ -111,63 +128,155 @@ export default function Distribution() {
             <Card className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Date Range</label>
-                  <Popover>
+                  <label className="text-sm font-medium mb-2 block">Date</label>
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal hover:bg-accent/50 transition-colors">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateRange.from && dateRange.to
-                          ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
+                          ? `${format(dateRange.from, "MM/dd/yyyy")} - ${format(dateRange.to, "MM/dd/yyyy")}`
                           : "Select date range"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <div className="bg-gradient-to-br from-background to-accent/20 p-4 rounded-lg">
-                        <div className="flex flex-col lg:flex-row gap-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-2 border-b">
-                              <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
-                              <label className="text-sm font-semibold text-foreground">From Date</label>
-                            </div>
-                            <Calendar
-                              mode="single"
-                              selected={dateRange.from}
-                              onSelect={(date) => date && setDateRange({ ...dateRange, from: date })}
-                              defaultMonth={dateRange.from}
-                              initialFocus
-                              className="pointer-events-auto rounded-md bg-background shadow-sm"
-                              disabled={(date) => date > new Date()}
-                              captionLayout="dropdown-buttons"
-                              fromYear={2020}
-                              toYear={new Date().getFullYear()}
-                            />
-                          </div>
-                          <div className="hidden lg:block w-px bg-border"></div>
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-2 border-b">
-                              <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
-                              <label className="text-sm font-semibold text-foreground">To Date</label>
-                            </div>
-                            <Calendar
-                              mode="single"
-                              selected={dateRange.to}
-                              onSelect={(date) => date && setDateRange({ ...dateRange, to: date })}
-                              defaultMonth={dateRange.to}
-                              className="pointer-events-auto rounded-md bg-background shadow-sm"
-                              disabled={(date) => date < dateRange.from || date > new Date()}
-                              captionLayout="dropdown-buttons"
-                              fromYear={2020}
-                              toYear={new Date().getFullYear()}
-                            />
-                          </div>
+                      <div className="flex">
+                        {/* Quick Select Sidebar */}
+                        <div className="w-44 bg-muted/30 border-r p-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal mb-1"
+                            onClick={() => {
+                              const today = new Date();
+                              setDateRange({ from: today, to: today });
+                            }}
+                          >
+                            Today
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal mb-1"
+                            onClick={() => {
+                              const yesterday = new Date();
+                              yesterday.setDate(yesterday.getDate() - 1);
+                              setDateRange({ from: yesterday, to: yesterday });
+                            }}
+                          >
+                            Yesterday
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal mb-1"
+                            onClick={() => {
+                              const today = new Date();
+                              const lastWeek = new Date();
+                              lastWeek.setDate(lastWeek.getDate() - 7);
+                              setDateRange({ from: lastWeek, to: today });
+                            }}
+                          >
+                            Last 7 days
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal mb-1"
+                            onClick={() => {
+                              const today = new Date();
+                              const last30 = new Date();
+                              last30.setDate(last30.getDate() - 30);
+                              setDateRange({ from: last30, to: today });
+                            }}
+                          >
+                            Last 30 days
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal mb-1"
+                            onClick={() => {
+                              const today = new Date();
+                              const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                              setDateRange({ from: firstDay, to: today });
+                            }}
+                          >
+                            This month
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal mb-1"
+                            onClick={() => {
+                              const today = new Date();
+                              const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                              const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                              setDateRange({ from: firstDayLastMonth, to: lastDayLastMonth });
+                            }}
+                          >
+                            Last month
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="w-full justify-start text-sm font-normal"
+                          >
+                            Personalized
+                          </Button>
                         </div>
-                        <div className="mt-4 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-                          <span>📅 Select your date range</span>
-                          <span className="text-primary font-medium">
-                            {dateRange.from && dateRange.to
-                              ? `${Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days`
-                              : '0 days'}
-                          </span>
+
+                        {/* Calendars */}
+                        <div className="flex gap-4 p-4">
+                          <Calendar
+                            mode="single"
+                            selected={dateRange.from}
+                            onSelect={(date) => date && setDateRange({ ...dateRange, from: date })}
+                            defaultMonth={dateRange.from}
+                            disabled={(date) => date > new Date()}
+                            captionLayout="dropdown-buttons"
+                            fromYear={2020}
+                            toYear={new Date().getFullYear()}
+                          />
+                          <Calendar
+                            mode="single"
+                            selected={dateRange.to}
+                            onSelect={(date) => date && setDateRange({ ...dateRange, to: date })}
+                            defaultMonth={dateRange.to}
+                            disabled={(date) => date < dateRange.from || date > new Date()}
+                            captionLayout="dropdown-buttons"
+                            fromYear={2020}
+                            toYear={new Date().getFullYear()}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bottom bar with Reset and Apply */}
+                      <div className="border-t p-3 flex items-center justify-between bg-background">
+                        <span className="text-sm text-muted-foreground">
+                          {dateRange.from && dateRange.to
+                            ? `${format(dateRange.from, "MM/dd/yyyy")} - ${format(dateRange.to, "MM/dd/yyyy")}`
+                            : "Select date range"}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const today = new Date();
+                              const last60 = new Date();
+                              last60.setDate(last60.getDate() - 60);
+                              setDateRange({ from: last60, to: today });
+                            }}
+                          >
+                            Reset
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => setDatePickerOpen(false)}
+                          >
+                            Apply
+                          </Button>
                         </div>
                       </div>
                     </PopoverContent>
@@ -203,10 +312,10 @@ export default function Distribution() {
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Cars</label>
-                  <Input
-                    placeholder="Enter cars"
+                  <InfiniteScrollCarSelect
                     value={cars}
-                    onChange={(e) => setCars(e.target.value)}
+                    onValueChange={setCars}
+                    placeholder="Select a car..."
                   />
                 </div>
 
@@ -223,7 +332,7 @@ export default function Distribution() {
               <div className="flex flex-wrap gap-3 items-center justify-between">
                 <div className="flex flex-wrap gap-3">
                   <Button>Filter</Button>
-                  <Button>Add</Button>
+                  <Button onClick={() => setIsAddModalOpen(true)}>Add</Button>
                   <Button>Export Car</Button>
                 </div>
                 <Button variant="link" onClick={handleClear} className="text-primary">
@@ -442,6 +551,73 @@ export default function Distribution() {
       </main>
 
       <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+
+      {/* Add Distribution Inspection Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[450px] sm:top-[30%]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-700">Add Distribution Inspection</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="space-y-1">
+              <Label htmlFor="name" className="text-sm font-medium text-gray-700">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter name"
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="feeder" className="text-sm font-medium text-gray-700">Feeder</Label>
+              <Select value={formData.feeder} onValueChange={(val) => setFormData({ ...formData, feeder: val })}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select feeder" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MPA01">MPA01</SelectItem>
+                  <SelectItem value="MPA02">MPA02</SelectItem>
+                  <SelectItem value="MPA03">MPA03</SelectItem>
+                  <SelectItem value="FDR-001">FDR-001</SelectItem>
+                  <SelectItem value="FDR-002">FDR-002</SelectItem>
+                  <SelectItem value="FDR-003">FDR-003</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="car" className="text-sm font-medium text-gray-700">Car</Label>
+              <InfiniteScrollCarSelect
+                value={formData.car}
+                onValueChange={(val) => setFormData({ ...formData, car: val })}
+                placeholder="Select a car..."
+                className="h-9"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setFormData({ name: "", feeder: "", car: "" });
+              }}
+              className="h-9 px-5"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddInspection}
+              disabled={!formData.name || !formData.feeder || !formData.car}
+              className="h-9 px-5 bg-blue-600 hover:bg-blue-700"
+            >
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
