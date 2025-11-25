@@ -46,7 +46,12 @@ export default function Distribution() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({ from: new Date(2025, 7, 31), to: new Date(2025, 9, 30) });
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => {
+    const today = new Date();
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(today.getDate() - 60);
+    return { from: sixtyDaysAgo, to: today };
+  });
   const [inspections, setInspections] = useState("");
   const [actions, setActions] = useState("");
   const [elements, setElements] = useState("");
@@ -102,290 +107,331 @@ export default function Distribution() {
 
           <div className="space-y-6">
 
-      {/* Filter Section */}
-      <Card className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Date Range</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from && dateRange.to
-                    ? `${format(dateRange.from, "MM/dd/yyyy")} - ${format(dateRange.to, "MM/dd/yyyy")}`
-                    : "Select date range"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={(range) => range?.from && range?.to && setDateRange(range as { from: Date; to: Date })}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-2 block">Inspections</label>
-            <Input
-              placeholder="Enter inspections"
-              value={inspections}
-              onChange={(e) => setInspections(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-2 block">Actions</label>
-            <Input
-              placeholder="Enter actions"
-              value={actions}
-              onChange={(e) => setActions(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-2 block">Elements</label>
-            <Input
-              placeholder="Enter elements"
-              value={elements}
-              onChange={(e) => setElements(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-2 block">Cars</label>
-            <Input
-              placeholder="Enter cars"
-              value={cars}
-              onChange={(e) => setCars(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-2 block">Feeders</label>
-            <Input
-              placeholder="Enter feeders"
-              value={feeders}
-              onChange={(e) => setFeeders(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-3 items-center justify-between">
-          <div className="flex flex-wrap gap-3">
-            <Button>Filter</Button>
-            <Button>Add</Button>
-            <Button>Export Car</Button>
-          </div>
-          <Button variant="link" onClick={handleClear} className="text-primary">
-            Clear
-          </Button>
-        </div>
-      </Card>
-
-      {/* Table Section */}
-      <Card className="p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Show</span>
-            <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm">entries</span>
-          </div>
-
-          <div className="w-full sm:w-64">
-            <Input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>EA</TableHead>
-                <TableHead>Feeder</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Measures</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Last Measure</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.name}</TableCell>
-                  <TableCell>{record.ea}</TableCell>
-                  <TableCell>{record.feeder}</TableCell>
-                  <TableCell>
-                    <Badge className={cn("font-normal", getStatusColor(record.status))}>
-                      {record.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{record.vehicle}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">
-                          {record.measures.red}
+            {/* Filter Section */}
+            <Card className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Date Range</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal hover:bg-accent/50 transition-colors">
+                        <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                        {dateRange.from && dateRange.to
+                          ? `${format(dateRange.from, "MMM dd, yyyy")} - ${format(dateRange.to, "MMM dd, yyyy")}`
+                          : "Select date range"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <div className="bg-gradient-to-br from-background to-accent/20 p-4 rounded-lg">
+                        <div className="flex flex-col lg:flex-row gap-6">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 pb-2 border-b">
+                              <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                              <label className="text-sm font-semibold text-foreground">From Date</label>
+                            </div>
+                            <Calendar
+                              mode="single"
+                              selected={dateRange.from}
+                              onSelect={(date) => date && setDateRange({ ...dateRange, from: date })}
+                              defaultMonth={dateRange.from}
+                              initialFocus
+                              className="pointer-events-auto rounded-md bg-background shadow-sm"
+                              disabled={(date) => date > new Date()}
+                              captionLayout="dropdown-buttons"
+                              fromYear={2020}
+                              toYear={new Date().getFullYear()}
+                            />
+                          </div>
+                          <div className="hidden lg:block w-px bg-border"></div>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 pb-2 border-b">
+                              <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                              <label className="text-sm font-semibold text-foreground">To Date</label>
+                            </div>
+                            <Calendar
+                              mode="single"
+                              selected={dateRange.to}
+                              onSelect={(date) => date && setDateRange({ ...dateRange, to: date })}
+                              defaultMonth={dateRange.to}
+                              className="pointer-events-auto rounded-md bg-background shadow-sm"
+                              disabled={(date) => date < dateRange.from || date > new Date()}
+                              captionLayout="dropdown-buttons"
+                              fromYear={2020}
+                              toYear={new Date().getFullYear()}
+                            />
+                          </div>
                         </div>
-                        <div className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center text-white text-xs">
-                          {record.measures.yellow}
+                        <div className="mt-4 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
+                          <span>📅 Select your date range</span>
+                          <span className="text-primary font-medium">
+                            {dateRange.from && dateRange.to
+                              ? `${Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days`
+                              : '0 days'}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{record.type}</TableCell>
-                  <TableCell>{record.lastMeasure}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/distribution/measures/${record.id}`)}
-                      >
-                        Open
-                      </Button>
-                      <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          Action <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem>
-                          <Download className="mr-2 h-4 w-4" />
-                          Download
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Reprocess
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Inspection Report
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate("/upload")}>
-                          <UploadIcon className="mr-2 h-4 w-4" />
-                          Upload
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <FolderOpen className="mr-2 h-4 w-4" />
-                          Re-Open
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy Id
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            <Bell className="mr-2 h-4 w-4" />
-                            Alarms
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            <DropdownMenuItem>View Alarms</DropdownMenuItem>
-                            <DropdownMenuItem>Configure Alarms</DropdownMenuItem>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            <MapPin className="mr-2 h-4 w-4" />
-                            Addresses
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            <DropdownMenuItem>View Addresses</DropdownMenuItem>
-                            <DropdownMenuItem>Edit Addresses</DropdownMenuItem>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            AI
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            <DropdownMenuItem>AI Analysis</DropdownMenuItem>
-                            <DropdownMenuItem>AI Suggestions</DropdownMenuItem>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuItem>
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Update Counters
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
-          <div className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * parseInt(entriesPerPage)) + 1} to{" "}
-            {Math.min(currentPage * parseInt(entriesPerPage), filteredData.length)} of{" "}
-            {filteredData.length} entries
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <div className="flex gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Inspections</label>
+                  <Input
+                    placeholder="Enter inspections"
+                    value={inspections}
+                    onChange={(e) => setInspections(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Actions</label>
+                  <Input
+                    placeholder="Enter actions"
+                    value={actions}
+                    onChange={(e) => setActions(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Elements</label>
+                  <Input
+                    placeholder="Enter elements"
+                    value={elements}
+                    onChange={(e) => setElements(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Cars</label>
+                  <Input
+                    placeholder="Enter cars"
+                    value={cars}
+                    onChange={(e) => setCars(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Feeders</label>
+                  <Input
+                    placeholder="Enter feeders"
+                    value={feeders}
+                    onChange={(e) => setFeeders(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex flex-wrap gap-3">
+                  <Button>Filter</Button>
+                  <Button>Add</Button>
+                  <Button>Export Car</Button>
+                </div>
+                <Button variant="link" onClick={handleClear} className="text-primary">
+                  Clear
                 </Button>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </Card>
+              </div>
+            </Card>
+
+            {/* Table Section */}
+            <Card className="p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">Show</span>
+                  <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm">entries</span>
+                </div>
+
+                <div className="w-full sm:w-64">
+                  <Input
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>EA</TableHead>
+                      <TableHead>Feeder</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Measures</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Last Measure</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="font-medium">{record.name}</TableCell>
+                        <TableCell>{record.ea}</TableCell>
+                        <TableCell>{record.feeder}</TableCell>
+                        <TableCell>
+                          <Badge className={cn("font-normal", getStatusColor(record.status))}>
+                            {record.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{record.vehicle}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">
+                                {record.measures.red}
+                              </div>
+                              <div className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center text-white text-xs">
+                                {record.measures.yellow}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{record.type}</TableCell>
+                        <TableCell>{record.lastMeasure}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/distribution/measures/${record.id}`)}
+                            >
+                              Open
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  Action <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <RefreshCw className="mr-2 h-4 w-4" />
+                                  Reprocess
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Inspection Report
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate("/upload")}>
+                                  <UploadIcon className="mr-2 h-4 w-4" />
+                                  Upload
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <FolderOpen className="mr-2 h-4 w-4" />
+                                  Re-Open
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Copy className="mr-2 h-4 w-4" />
+                                  Copy Id
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>
+                                    <Bell className="mr-2 h-4 w-4" />
+                                    Alarms
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    <DropdownMenuItem>View Alarms</DropdownMenuItem>
+                                    <DropdownMenuItem>Configure Alarms</DropdownMenuItem>
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>
+                                    <MapPin className="mr-2 h-4 w-4" />
+                                    Addresses
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    <DropdownMenuItem>View Addresses</DropdownMenuItem>
+                                    <DropdownMenuItem>Edit Addresses</DropdownMenuItem>
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    AI
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    <DropdownMenuItem>AI Analysis</DropdownMenuItem>
+                                    <DropdownMenuItem>AI Suggestions</DropdownMenuItem>
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                                <DropdownMenuItem>
+                                  <RotateCcw className="mr-2 h-4 w-4" />
+                                  Update Counters
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * parseInt(entriesPerPage)) + 1} to{" "}
+                  {Math.min(currentPage * parseInt(entriesPerPage), filteredData.length)} of{" "}
+                  {filteredData.length} entries
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </Card>
           </div>
 
           <footer className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">

@@ -12,8 +12,6 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { ProfileModal } from "@/components/ProfileModal";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const measureData = [
   { id: "b74d9f44-a2b4-4d93-89c7-bf9fdf83993", address: "Rua Samo Antonio Jardim Carolina 78890-000 Sorriso", date: "30/09/2025", time: "20:35:44", action: "", hotspot: "30.83", reprocessedAt: "-" },
@@ -21,35 +19,12 @@ const measureData = [
   { id: "ca334235-d348-4867-a141-00b7bb5c94a", address: "Rua Eça de Queiroz Taiamã 78891-138 Sorriso", date: "30/09/2025", time: "20:46:01", action: "", hotspot: "31.80", reprocessedAt: "-" },
   { id: "fe0e4ef3-c0bc-4f13-b1fc-807a6244fb94", address: "", date: "30/09/2025", time: "20:27:14", action: "", hotspot: "36.53", reprocessedAt: "-" },
   { id: "8c29239b-3ac5-4031-974f-b7f534b66b6b", address: "", date: "29/09/2025", time: "22:11:39", action: "", hotspot: "41.51", reprocessedAt: "-" },
-  { id: "8e5d9a85-5e3c-41B7-9b05-7bf0f043ac3d", address: "Rua Santa Catarina de Alexandria Parque Universitário 78891-138 Sorriso", date: "30/09/2025", time: "21:24:01", action: "Immediate Action", hotspot: "86.84", reprocessedAt: "-" },
-  { id: "45b7896b-2f77-4dcb-8bd8-ef7d723e0e69", address: "Rua Santa Catarina de Alexandria Parque Universitário 78891-138 Sorriso", date: "30/09/2025", time: "21:24:14", action: "Immediate Action", hotspot: "83.07", reprocessedAt: "-" },
+  { id: "8e5d9a85-5e3c-41B7-9b05-7bf0f043ac3d", address: "Rua Santa Catarina de Alexandria Parque Universitário 78891-138 Sorriso", date: "30/09/2025", time: "21:24:01", action: "Immediate Action", hotspot: "80.00", reprocessedAt: "-" },
+  { id: "45b7896b-2f77-4dcb-8bd8-ef7d723e0e69", address: "Rua Santa Catarina de Alexandria Parque Universitário 78891-138 Sorriso", date: "30/09/2025", time: "21:24:14", action: "Immediate Action", hotspot: "78.00", reprocessedAt: "-" },
   { id: "c52ba81e-b48c-4bf4-b248-2d4caa5c77b7", address: "-", date: "30/09/2025", time: "21:22:56", action: "Immediate Action", hotspot: "73.74", reprocessedAt: "-" },
-  { id: "a43969b3-124e-4c8a-956d-c6ff64adba05", address: "Rua Santa Catarina de Alexandria Parque Universitário 78891-138 Sorriso", date: "30/09/2025", time: "21:22:11", action: "Scheduled Action", hotspot: "53.56", reprocessedAt: "-" },
+  { id: "a43969b3-124e-4c8a-956d-c6ff64adba05", address: "Rua Santa Catarina de Alexandria Parque Universitário 78891-138 Sorriso", date: "30/09/2025", time: "21:22:11", action: "Scheduled Action", hotspot: "68.00", reprocessedAt: "-" },
   { id: "0a6266ac-33c8-4e8d-b296-2ccc80c76759", address: "Rua Euclides da Cunha Pinheiros 78891-138 Sorriso", date: "30/09/2025", time: "20:58:28", action: "Scheduled Action", hotspot: "41.29", reprocessedAt: "-" },
 ];
-
-const chartData = [
-  { category: "Poles", feederElements: 600, inspectionMeasures: 552 },
-  { category: "Poste", feederElements: 0, inspectionMeasures: 0 },
-];
-
-const actionsChartData = [
-  { action: "Immediate Action", count: 3 },
-  { action: "Scheduled Action", count: 15 },
-  { action: "No Action", count: 306 },
-  { action: "Action not Defined", count: 552 },
-];
-
-const chartConfig = {
-  feederElements: {
-    label: "Feeder Elements",
-    color: "hsl(var(--chart-1))",
-  },
-  inspectionMeasures: {
-    label: "Inspection Measures",
-    color: "hsl(var(--chart-2))",
-  },
-};
 
 export default function MeasureDetails() {
   const navigate = useNavigate();
@@ -118,77 +93,9 @@ export default function MeasureDetails() {
           <CollapsibleContent>
             <CardContent className="p-4">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Charts Row - 65% and 35% width */}
-                <div className="lg:col-span-4 grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
-                  {/* Feeder Elements vs Inspection Measures Chart - 65% */}
-                  <Card className="flex flex-col">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base font-semibold">{t('feederElementsVsInspectionMeasures')}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <ChartContainer config={chartConfig} className="h-[300px]">
-                        <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis 
-                            dataKey="category" 
-                            className="text-xs"
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
-                          />
-                          <YAxis 
-                            className="text-xs"
-                            tick={{ fill: "hsl(var(--muted-foreground))" }}
-                          />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="feederElements" fill="var(--color-feederElements)" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="inspectionMeasures" fill="var(--color-inspectionMeasures)" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
+                {/* Charts row removed - both Feeder/Inspection and Actions charts were deleted */}
 
-                  {/* Actions Chart - 35% */}
-                  <Card className="flex flex-col overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-semibold">{t('actions')}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1 p-1 overflow-hidden">
-                      <ChartContainer config={{
-                        count: { label: t('count'), color: "hsl(var(--primary))" }
-                      }} className="h-[300px] w-full">
-                        <BarChart data={actionsChartData} margin={{ top: 0, right: 0, left: 0, bottom: 60 }}>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis 
-                            dataKey="action" 
-                            angle={-35}
-                            textAnchor="end"
-                            height={60}
-                            interval={0}
-                            className="text-xs"
-                            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                          />
-                          <YAxis width={35} className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                            {actionsChartData.map((entry, index) => (
-                              <Bar 
-                                key={`cell-${index}`} 
-                                dataKey="count"
-                                fill={
-                                  entry.action === "Immediate Action" ? "hsl(var(--destructive))" :
-                                  entry.action === "Scheduled Action" ? "hsl(30 100% 50%)" :
-                                  entry.action === "No Action" ? "hsl(160 60% 50%)" :
-                                  "hsl(var(--muted))"
-                                }
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Right Panel - Statistics Cards - 35% */}
+                {/* Right Panel - Statistics Cards */}
                 <div className="lg:col-span-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Inspection Statistics */}
                   <Card>
